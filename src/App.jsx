@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useGistemp from './lib/useGistemp.js';
 import { compareWindows, buildPathItems, annualMeans, decadeMeans, average } from './lib/gistemp.js';
 import { stripeColor } from './lib/colors.js';
 import { fmt } from './lib/formato.js';
 import Sonifier from './audio/Sonifier.js';
 import Cielo from './components/Cielo.jsx';
-import Modelo3D from './components/Modelo3D.jsx';
 import Objetos from './components/Objetos.jsx';
-import LineaTiempo from './components/LineaTiempo.jsx';
+import Grafica from './components/Grafica.jsx';
+import Logro from './components/Logro.jsx';
+import Franjas from './components/Franjas.jsx';
 import Referencia from './components/Referencia.jsx';
 import Misiones from './components/Misiones.jsx';
 import { progreso } from './lib/progreso.js';
@@ -21,6 +22,9 @@ import Datos from './components/secciones/Datos.jsx';
 import { TEXTOS, plantilla } from './config/textos.js';
 import { MISIONES } from './config/misiones.js';
 import './App.css';
+
+// El planeta 3D (con Three.js) se descarga aparte: la página se pinta antes
+const Planeta = lazy(() => import('./components/Planeta.jsx'));
 
 
 export default function App() {
@@ -42,16 +46,16 @@ export default function App() {
   const [referencia, setReferencia] = useState('pre');
   const [piso, setPiso] = useState(0);
   const [claveActiva, setClaveActiva] = useState(null);
-  const [sonido, setSonido] = useState(false);
   const [completas, setCompletas] = useState({});
   const [datosLogro, setDatosLogro] = useState({});
-  const [aviso, setAviso] = useState(null);
+  const [logro, setLogro] = useState(null);
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const [misionesAbiertas, setMisionesAbiertas] = useState(false);
   const objetosVistos = useRef(new Set());
   const [decadaSel, setDecadaSel] = useState(null);
   const [reproduciendo, setReproduciendo] = useState(false);
   const audio = useRef(null);
-  const avisoTimer = useRef(null);
+  const logroTimer = useRef(null);
   const interacciones = useRef({});
 
   // ---------- Datos derivados ----------
@@ -105,7 +109,20 @@ export default function App() {
     return () => cancelAnimationFrame(id);
   }, [referencia, offset]);
 
-  useEffect(() => () => audio.current?.cerrar(), []);
+  // Sonido activo por defecto: el navegador exige un primer gesto, así que se
+  // desbloquea con el primer clic, toque o tecla en cualquier parte de la página.
+  useEffect(() => {
+    audio.current = new Sonifier();
+    const desbloquear = () => {
+      audio.current?.iniciar();
+      ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.removeEventListener(ev, desbloquear, true));
+    };
+    ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, desbloquear, true));
+    return () => {
+      ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.removeEventListener(ev, desbloquear, true));
+      audio.current?.cerrar();
+    };
+  }, []);
 
   // Efectos de interfaz: clic en botones y "tic" al pasar sobre algo seleccionable
   useEffect(() => {
@@ -135,9 +152,9 @@ export default function App() {
     if (extra) setDatosLogro(d => ({ ...d, [id]: extra }));
     const m = MISIONES.find(x => x.id === id);
     audio.current?.logro();
-    clearTimeout(avisoTimer.current);
-    setAviso(`+${m.xp} XP · ${m.titulo}`);
-    avisoTimer.current = setTimeout(() => setAviso(null), 2800);
+    clearTimeout(logroTimer.current);
+    setLogro({ id: Date.now(), titulo: m.titulo, xp: m.xp });
+    logroTimer.current = setTimeout(() => setLogro(null), 3000);
   }, []);
 
   // ---------- Acciones ----------
@@ -172,7 +189,8 @@ export default function App() {
 
   const interaccionModelo = tipo => {
     interacciones.current[tipo] = true;
-    if (interacciones.current.girar && interacciones.current.zoom) completar('modelo');
+    const i = interacciones.current;
+    if (i.girar && (i.zoom || i.vista)) completar('modelo');
   };
 
   const abrirObjeto = id => {
@@ -188,18 +206,6 @@ export default function App() {
     setClaveActiva(null);
     setDecadaSel(d.decade);
     if (d.decade === decadaCalida.decade) completar('decada', { decada: `${d.decade}`, valor: fmt(d.value) });
-  };
-
-  const alternarSonido = async () => {
-    if (!audio.current) audio.current = new Sonifier();
-    if (sonido) {
-      await audio.current.pausar();
-      setSonido(false);
-    } else {
-      await audio.current.iniciar();
-      setSonido(true);
-      audio.current.clic();
-    }
   };
 
   const adivinar = estimacion => {
@@ -228,12 +234,13 @@ export default function App() {
   }, [reproduciendo, items.length, unidad, completar]);
 
   const alternarReproduccion = () => {
-    if (!sonido && !reproduciendo) alternarSonido();
+    audio.current?.iniciar();
     setReproduciendo(r => !r);
   };
 
   // ---------- Textos derivados ----------
   const enRef = v => (referencia === 'nasa' ? v + offset : v);
+  const franjas = <Franjas anios={anios} rango={rango} onRango={cambiarRango} anioActivo={activo?.year} onRecorrer={recorrerAnio} />;
   const estado = activo
     ? activo.value >= 2
       ? TEXTOS.cifra.encima2
@@ -250,19 +257,18 @@ export default function App() {
           <PixelIcon nombre="termometro" tamano={22} color="var(--coral)" />
           <span>{TEXTOS.titulo}</span>
         </a>
-        <nav aria-label="Secciones">
-          {TEXTOS.nav.map(n => <a key={n.id} href={`#${n.id}`}>{n.texto}</a>)}
+        <nav id="menu-principal" className={menuAbierto ? 'abierto' : ''} aria-label="Secciones">
+          {TEXTOS.nav.map(n => <a key={n.id} href={`#${n.id}`} onClick={() => setMenuAbierto(false)}>{n.texto}</a>)}
         </nav>
         <div className="nav-acciones">
-          <button type="button" className={`nav-boton ${sonido ? 'activo' : ''}`} onClick={alternarSonido} aria-pressed={sonido}
-            aria-label={sonido ? 'Silenciar' : 'Activar sonido'}>
-            <PixelIcon nombre={sonido ? 'sonido' : 'silencio'} tamano={16} />
-            <span>{TEXTOS.sonido.activar}</span>
-          </button>
-          <button type="button" className="nav-boton misiones-boton" onClick={() => setMisionesAbiertas(true)} aria-expanded={misionesAbiertas}>
+          <button type="button" className="nav-boton misiones-boton" onClick={() => { setMisionesAbiertas(true); setMenuAbierto(false); }} aria-expanded={misionesAbiertas}>
             <PixelIcon nombre="bandera" tamano={16} />
             <span>{TEXTOS.misiones.abrir}</span>
             <span className="contador">{hechas}/{MISIONES.length}</span>
+          </button>
+          <button type="button" className="nav-boton menu-boton" onClick={() => setMenuAbierto(m => !m)}
+            aria-expanded={menuAbierto} aria-controls="menu-principal" aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}>
+            <PixelIcon nombre={menuAbierto ? 'cerrar' : 'menu'} tamano={18} />
           </button>
         </div>
       </header>
@@ -287,7 +293,10 @@ export default function App() {
                       {estado}
                       {activo && unidad === 'year' && activo.months < 12 && ` · ${plantilla(TEXTOS.cifra.parcial, { m: activo.months })}`}
                     </p>
-                    {referencia === 'nasa' && <p className="lectura-nota">{TEXTOS.cifra.notaParis}</p>}
+                    <p className="lectura-nota">
+                      <span aria-hidden={referencia === 'nasa'}>{TEXTOS.cifra.ceroPre}</span>
+                      <span aria-hidden={referencia !== 'nasa'}>{TEXTOS.cifra.ceroNasa}</span>
+                    </p>
                   </div>
 
                   <dl className="comparacion">
@@ -301,25 +310,38 @@ export default function App() {
               )}
             </div>
 
-            <Modelo3D items={items} activo={indiceActivo} piso={piso} unidad={unidad}
-              onActivar={activarIndice} onInteraccion={interaccionModelo} onSobreColumna={() => audio.current?.hover()}
-              etiquetaValor={v => `${fmt(enRef(v))} °C`} />
+            <Suspense fallback={
+              <div className="planeta planeta-cargando" aria-busy="true">
+                <div className="planeta-vistas" aria-hidden="true"><span /><span /></div>
+                <div className="planeta-ventana"><span className="planeta-bola" /></div>
+                <p className="planeta-ayuda">{TEXTOS.planeta.cargando}</p>
+                {franjas}
+              </div>
+            }>
+              <Planeta valor={activo?.value} valorNasa={activo ? activo.value + offset : undefined}
+                anio={activo ? activo.year + ((activo.month ?? 1) - 1) / 12 : undefined} onInteraccion={interaccionModelo}
+                etiqueta={activo ? `${activo.label} · ${fmt(enRef(activo.value))} °C` : ''}>
+                {franjas}
+              </Planeta>
+            </Suspense>
           </div>
 
           <Objetos datos={valoresTexto} onAbrir={abrirObjeto} />
 
-          <div className="escena-linea panel">
-            <LineaTiempo anios={anios} rango={rango} onRango={cambiarRango} anioActivo={activo?.year} onRecorrer={recorrerAnio} />
+          <div className="escena-grafica panel">
+            <Grafica anios={anios} rango={rango} onRango={cambiarRango} anioActivo={activo?.year} onRecorrer={recorrerAnio}
+              onSobre={() => audio.current?.hover()} piso={piso} enRef={enRef}
+              reproduciendo={reproduciendo} onReproducir={alternarReproduccion} />
           </div>
           <Dither />
         </section>
 
-        <Anomalia referencia={referencia} onReferencia={cambiarReferencia} ejemplo={ejemplo} offset={offset} />
-        <Paris ultimos12={ultimos12} ultimos20={ultimos20} />
-        <Decadas decadas={decadas} seleccion={decadaSel} onElegir={elegirDecada} />
         <Escuchar reproduciendo={reproduciendo} onAlternar={alternarReproduccion}
           progreso={items.length > 1 ? indiceActivo / (items.length - 1) : 0}
           etiqueta={activo ? `${activo.label} ${fmt(enRef(activo.value))} °C` : ''} rango={rango} />
+        <Anomalia referencia={referencia} onReferencia={cambiarReferencia} ejemplo={ejemplo} offset={offset} />
+        <Paris ultimos12={ultimos12} ultimos20={ultimos20} />
+        <Decadas decadas={decadas} seleccion={decadaSel} onElegir={elegirDecada} />
         <Datos valores={valoresTexto} />
       </main>
 
@@ -329,7 +351,7 @@ export default function App() {
         completas={completas} datosLogro={datosLogro} onAdivinar={adivinar} />
       {misionesAbiertas && <div className="velo" onClick={() => setMisionesAbiertas(false)} aria-hidden="true" />}
 
-      {aviso && <div className="aviso" role="status">{aviso}</div>}
+      {logro && <Logro key={logro.id} titulo={logro.titulo} xp={logro.xp} />}
     </div>
   );
 }

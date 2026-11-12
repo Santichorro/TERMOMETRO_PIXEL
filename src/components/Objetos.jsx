@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import useMedia from '../lib/useMedia.js';
 import Sprite from './Sprites.jsx';
 import PixelIcon from './PixelIcon.jsx';
 import { OBJETOS } from '../config/objetos.js';
@@ -11,6 +13,7 @@ import { plantilla } from '../config/textos.js';
 
 export default function Objetos({ datos, onAbrir }) {
   const [abierto, setAbierto] = useState(null);
+  const celular = useMedia('(max-width: 640px)');
 
   useEffect(() => {
     if (!abierto) return;
@@ -20,6 +23,16 @@ export default function Objetos({ datos, onAbrir }) {
   }, [abierto]);
 
   const obj = OBJETOS.find(o => o.id === abierto);
+  const ficha = obj && (
+    <div id="ficha-objeto" className="ficha panel" role="dialog" aria-label={obj.titulo}
+      style={{ '--x': `${Math.min(80, Math.max(20, obj.x))}%` }}>
+      <button type="button" className="ficha-cerrar" onClick={() => setAbierto(null)} aria-label="Cerrar">
+        <PixelIcon nombre="cerrar" tamano={14} />
+      </button>
+      <h3>{obj.titulo}</h3>
+      <p>{plantilla(obj.texto, datos)}</p>
+    </div>
+  );
 
   return (
     <div className="objetos">
@@ -38,16 +51,7 @@ export default function Objetos({ datos, onAbrir }) {
           </li>
         ))}
       </ul>
-      {obj && (
-        <div id="ficha-objeto" className="ficha panel" role="dialog" aria-label={obj.titulo}
-          style={{ '--x': `${Math.min(80, Math.max(20, obj.x))}%` }}>
-          <button type="button" className="ficha-cerrar" onClick={() => setAbierto(null)} aria-label="Cerrar">
-            <PixelIcon nombre="cerrar" tamano={14} />
-          </button>
-          <h3>{obj.titulo}</h3>
-          <p>{plantilla(obj.texto, datos)}</p>
-        </div>
-      )}
+      {obj && (celular ? createPortal(ficha, document.body) : ficha)}
     </div>
   );
 }

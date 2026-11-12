@@ -16,7 +16,7 @@ export const TEXTOS = {
 
   portada: {
     titulo: 'Un siglo de calor, año por año',
-    frase: 'Cada bloque es un año de temperatura global medida por NASA. Gira el modelo, elige tu período y mira cómo el día se vuelve atardecer.',
+    frase: 'Mira cómo cambia el planeta con la temperatura global medida por NASA. Elige tu período en el gráfico y mira cómo el día se vuelve atardecer.',
   },
 
   cifra: {
@@ -26,7 +26,8 @@ export const TEXTOS = {
     encima: '{d} °C por encima de +1,5',
     encima2: 'Por encima de +2,0',
     parcial: 'año incompleto: {m} meses',
-    notaParis: 'Los límites de París se miden desde 1880–1900.',
+    ceroPre: 'Cero: promedio 1880–1900, la base del Acuerdo de París.',
+    ceroNasa: 'Cero: promedio 1951–1980. París se mide desde 1880–1900.',
   },
 
   referencia: {
@@ -44,28 +45,31 @@ export const TEXTOS = {
     cambio: 'Cambio',
   },
 
-  modelo: {
-    aria: 'Modelo 3D de columnas de temperatura. Cada columna es un año; las filas son décadas.',
-    ayuda: 'Arrastra para girar · haz clic en el modelo para acercar con la rueda',
-    ayudaActivo: 'Rueda para acercar · Esc para soltar · clic en una columna para verla',
-    ayudaTactil: 'Arrastra para girar · pellizca para acercar · toca una columna para verla',
-    ceroPre: 'cero: 1880–1900',
-    ceroNasa: 'cero NASA: 1951–1980',
+  planeta: {
+    aria: 'Planeta Tierra en 3D que cambia de color según la anomalía global del año seleccionado.',
+    vistaMapa: 'Mapa',
+    vistaPlaneta: 'Planeta',
+    ayuda: 'Arrastra para girar · haz clic en el planeta para acercar con la rueda',
+    ayudaActivo: 'Rueda para acercar · Esc para soltar',
+    ayudaTactil: 'Arrastra para girar · pellizca para acercar',
+    leyenda: 'Anomalía °C frente a 1951–1980 · reparto regional ilustrativo',
+    franjas: 'Desliza sobre las franjas para recorrer los años',
+    cargando: 'Preparando el planeta…',
   },
 
-  linea: {
+  grafica: {
     titulo: 'Elige tu período',
-    ayuda: 'Arrastra las asas · pasa por las franjas para recorrer los años',
+    ayuda: 'Arrastra las asas amarillas para elegir el período · pasa por las barras para recorrer los años',
     todo: 'Todo',
     anios: '{n} años',
+    ceroPre: 'cero: 1880–1900',
+    ceroNasa: 'cero NASA: 1951–1980',
   },
 
   vidrios: {
     p15: '+1,5 °C París',
     p20: '+2,0 °C',
   },
-
-  sonido: { activar: 'Sonido', silenciar: 'Sonido' },
 
   anomalia: {
     titulo: '¿Qué es una anomalía?',
@@ -93,15 +97,17 @@ export const TEXTOS = {
     titulo: 'Década por década',
     texto: 'Promediar diez años borra los altibajos de El Niño, La Niña o una erupción volcánica y deja ver la tendencia. Toca una década para cargarla en el explorador.',
     incompleta: 'década incompleta',
+    incompletaNota: 'Década incompleta: la serie empieza en 1926 y la década actual sigue en curso.',
     cargada: 'Cargada en el explorador',
   },
 
   escuchar: {
     titulo: 'Escucha el siglo',
     texto: 'Cada año suena como una nota: cuanto más caliente, más aguda y más áspera. Al reproducir el período, escuchas cómo la melodía sube con el calor. Todo el sonido se genera en el navegador a partir de los datos.',
-    reproducir: 'Escuchar el período',
+    reproducir: 'Escuchar',
     pausar: 'Pausar',
-    nota: 'Se reproduce el período elegido en el explorador.',
+    nota: 'Se reproduce el período elegido en el gráfico, año por año.',
+    seccionBoton: 'Escuchar el período',
   },
 
   datos: {
@@ -112,6 +118,7 @@ export const TEXTOS = {
       { t: 'Referencia 1951–1980', d: 'NASA publica cada mes como diferencia frente al promedio de ese mismo mes entre 1951 y 1980.' },
       { t: 'Antes de la industria', d: 'Para ubicar los límites de París usamos el promedio 1880–1900 de la misma serie: {offset} °C respecto a 1951–1980. Ese período no se muestra, solo se usa como cero.' },
       { t: 'Datos faltantes', d: 'Los meses sin publicar aparecen como *** en el archivo. Los omitimos: convertirlos en cero sería inventar un mes igual a la referencia.' },
+      { t: 'Color del planeta', d: 'El archivo usado trae un valor global por mes. En la vista Mapa ese promedio es real y usa la escala de colores de NASA, pero el reparto por regiones es ilustrativo: imita lo que muestran sus mapas (más calor en el Ártico y en tierra firme). NASA publica los mapas por región en otros archivos más pesados.' },
       { t: 'Período mostrado', d: 'De {inicio} a {fin}: {meses} meses de datos reales.' },
     ],
     enlace: 'Ver el sitio de NASA GISTEMP',

@@ -1,0 +1,29 @@
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font: 400 1.0625rem/1.65 var(--texto);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-family: var(--display); font-weight: 600; line-height: 1.1; margin: 0; letter-spacing: 0; }
+p { margin: 0; }
+a { color: var(--hielo); text-underline-offset: 3px; }
+
+::selection { background: var(--coral); color: #fff; }
+:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+button, input, select { font: inherit; color: inherit; }
+* { scrollbar-color: #9fb3aa var(--papel); scrollbar-width: thin; }
+
+canvas, .pixel-img { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

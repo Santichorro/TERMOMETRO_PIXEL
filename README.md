@@ -17,11 +17,13 @@ npm run dev
 | Imágenes pixel art (fondo, decoración, mascota) | `src/config/assets.js` + `public/assets/` |
 | Colores, fuentes y medidas | `src/styles/tokens.css` |
 | Distribución de la pantalla | `src/App.css` |
-| Modelo 3D (columnas, isla, vidrios de París, zoom) | `src/components/Modelo3D.jsx` |
+| Planeta 3D (vistas Mapa / Planeta, edificios, zoom) | `src/components/Planeta.jsx` |
 | Paisaje de día → atardecer | `src/components/Cielo.jsx` |
 | Objetos interactivos del paisaje | `src/config/objetos.js` + `src/components/Sprites.jsx` |
 | Secciones de lectura (anomalía, París, décadas, escuchar, datos) | `src/components/secciones/` |
-| Línea de tiempo / selector de período | `src/components/LineaTiempo.jsx` |
+| Gráfica 2D de barras / selector de período | `src/components/Grafica.jsx` |
+| Franjas bajo el planeta (mismo período y año que la gráfica) | `src/components/Franjas.jsx` |
+| Aviso de logro (estilo Xbox, 3 s) | `src/components/Logro.jsx` |
 | Sonido | `src/audio/Sonifier.js` |
 | Datos y cálculos (línea base, ventanas) | `src/lib/gistemp.js` |
 
@@ -37,4 +39,15 @@ Recomendado: PNG transparentes a resolución nativa (por ejemplo 320×180); se e
 
 React, Vite, Three.js (MIT) · Pixelify Sans y Mulish (SIL Open Font License, servidas localmente con @fontsource) · sonido sintetizado con Web Audio API · datos NASA (dominio público).
 
-La versión anterior del boceto está en `_version1/`.
+Versiones anteriores del boceto: `_version1/` (diorama) y `_version2/` (columnas 3D + línea de tiempo).
+
+Contornos de continentes: `world-atlas` (Natural Earth, dominio público) leídos con `topojson-client`.
+
+## Rendimiento
+
+- El planeta 3D (Three.js, ~142 KB comprimido) se carga aparte con `React.lazy`: la página se pinta primero y mientras tanto se ve un planeta de espera del mismo tamaño.
+- Los continentes vienen pre-dibujados en `src/assets/tierra-sprite.png` (21 KB). Se regenera con `scripts/generar-sprite.mjs` solo si cambia el mapa.
+- El campo de colores del mapa se calcula a 128×64 con tablas precalculadas; la textura es de 512×256.
+- El planeta se dibuja a 1/3 de resolución y a ~30 cuadros por segundo; el planeta y el cielo se pausan fuera de pantalla o con la pestaña oculta.
+- Edificios con `InstancedMesh` (3 llamadas de dibujo).
+- Fuentes: solo alfabeto latino y los pesos usados. El CSV de NASA se precarga desde `index.html`.

@@ -1,0 +1,33 @@
+/* ==========================================================
+   TOKENS DE DISEÑO — edita aquí colores, fuentes y medidas.
+   Mundo: paisaje pixel de día que se vuelve atardecer rojo.
+   ========================================================== */
+:root {
+  /* Tinta y superficies */
+  --tinta: #13212c;          /* texto principal */
+  --tinta-suave: #3f5563;    /* texto secundario (contraste AA sobre papel) */
+  --papel: #eef4f1;          /* fondo de las secciones de lectura */
+  --papel-2: #e2ece7;        /* bandas alternas */
+  --retícula: rgba(19, 33, 44, 0.06);
+  --panel: #ffffff;
+  --panel-borde: #13212c;
+  --bisel: #c7d5cf;          /* sombra inferior de paneles y botones claros */
+
+  /* Acento (botones, foco, valores clave) */
+  --coral: #e05a47;
+  --coral-oscuro: #a83a2b;
+  --coral-claro: #fbe3de;
+
+  /* Estados */
+  --verde: #4d8b3c;
+  --verde-claro: #dcefd3;
+  --hielo: #2f7ea8;          /* umbrales de París */
+
+  /* Tipografía */
+  --display: 'Pixelify Sans', 'Mulish', system-ui, sans-serif;
+  --texto: 'Mulish', system-ui, sans-serif;
+
+  /* Escala */
+  --px: 4px;
+  --contenido: 1200px;
+}

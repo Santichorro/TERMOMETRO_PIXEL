@@ -9,7 +9,7 @@ export default function Escuchar({ reproduciendo, onAlternar, progreso, etiqueta
         <div className="reproductor panel">
           <button type="button" className="boton grande" onClick={onAlternar} aria-pressed={reproduciendo}>
             <PixelIcon nombre={reproduciendo ? 'pausa' : 'play'} tamano={18} />
-            {reproduciendo ? TEXTOS.escuchar.pausar : TEXTOS.escuchar.reproducir}
+            {reproduciendo ? TEXTOS.escuchar.pausar : TEXTOS.escuchar.seccionBoton}
           </button>
           <div className="reproductor-pista" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progreso * 100)}>
             <span style={{ transform: `scaleX(${progreso})` }} />
