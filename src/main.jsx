@@ -1,10 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import '@fontsource/pixelify-sans/500.css';
-import '@fontsource/pixelify-sans/600.css';
-import '@fontsource/mulish/400.css';
-import '@fontsource/mulish/600.css';
-import '@fontsource/mulish/800.css';
+// Solo el alfabeto latino (español) y los pesos que se usan
+import '@fontsource/pixelify-sans/latin-500.css';
+import '@fontsource/pixelify-sans/latin-600.css';
+import '@fontsource/mulish/latin-400.css';
+import '@fontsource/mulish/latin-600.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import App from './App.jsx';

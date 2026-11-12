@@ -146,8 +146,21 @@ export default function Cielo({ calor = 0 }) {
       actual += (tObjetivo.current - actual) * 0.12;
       dibujar(ctx, actual, reducido ? 0 : (ahora - inicio) / 1000);
     };
-    id = requestAnimationFrame(paso);
-    return () => cancelAnimationFrame(id);
+    // Solo se anima mientras el paisaje se ve y la pestaña está activa
+    let visible = true;
+    const reanudar = () => {
+      cancelAnimationFrame(id);
+      if (visible && !document.hidden) id = requestAnimationFrame(paso);
+    };
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; reanudar(); });
+    io.observe(ref.current);
+    document.addEventListener('visibilitychange', reanudar);
+    reanudar();
+    return () => {
+      cancelAnimationFrame(id);
+      io.disconnect();
+      document.removeEventListener('visibilitychange', reanudar);
+    };
   }, [usarAssets]);
 
   return (
