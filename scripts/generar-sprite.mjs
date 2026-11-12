@@ -1,6 +1,6 @@
 // Genera src/assets/tierra-sprite.png (tierra, contornos y retícula pre-dibujados).
 // Solo hace falta si cambias el mapa. Requiere: npm i -D playwright && npx playwright install chromium
-// y luego: node scripts/generar-sprite.mjs  (después se reduce a 512×768 en 16 grises con cualquier editor o Pillow).
+// Luego: node scripts/generar-sprite.mjs (y reducir a 512×768 en 16 grises con Pillow o un editor).
 import { feature } from 'topojson-client';
 import fs from 'fs';
 import { createRequire } from 'module';
@@ -16,7 +16,18 @@ const url = await p.evaluate((anillos) => {
   const xy = ([lon, lat]) => [((lon + 180) / 360) * W, ((90 - lat) / 180) * H];
   const trazar = (oy) => { x.beginPath(); for (const a of anillos) { let ant = null; a.forEach((pt, i) => { const [px, py] = xy(pt); if (i === 0 || (ant && Math.abs(px - ant) > W / 2)) x.moveTo(px, py + oy); else x.lineTo(px, py + oy); ant = px; }); } };
   // banda 0: tierra rellena (blanco opaco)
-  x.fillStyle = '#fff'; trazar(0); x.fill('evenodd');
+  // Relleno: se "desenvuelven" las longitudes para que los polígonos que cruzan
+  // el meridiano 180° no dejen franjas, y se dibujan también desplazados ±360°.
+  x.fillStyle = '#fff';
+  x.beginPath();
+  for (const a of anillos) {
+    const lon = [a[0][0]];
+    for (let i = 1; i < a.length; i++) { let l = a[i][0]; while (l - lon[i - 1] > 180) l -= 360; while (l - lon[i - 1] < -180) l += 360; lon.push(l); }
+    for (const d of [-360, 0, 360]) a.forEach((pt, i) => { const [px, py] = xy([lon[i] + d, pt[1]]); if (i === 0) x.moveTo(px, py); else x.lineTo(px, py); });
+  }
+  x.fill('evenodd');
+  // La Antártida llega al polo: se cierra el borde inferior
+  x.fillRect(0, H - 4, W, 4);
   // banda 1: contornos de continentes
   x.strokeStyle = '#fff'; x.lineWidth = 2.5; x.lineJoin = 'round'; trazar(H); x.stroke();
   // banda 2: retícula punteada cada 30°

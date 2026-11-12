@@ -170,7 +170,6 @@ export function pintarTextura(ctx, vista, c, capas, mezcla) {
   ctx.fillStyle = mezcla('#3d86c6', '#a8503a', t); // océano
   ctx.fillRect(0, 0, TEX_W, TEX_H);
   ctx.drawImage(colorear(capas, capas.tierra, mezcla('#79b35a', '#d9a24a', t)), 0, 0);
-  ctx.drawImage(colorear(capas, capas.contornos, mezcla('#4f8a3c', '#9a5a2a', t)), 0, 0);
   // Casquetes polares (decorativos; no representan datos de hielo)
   ctx.fillStyle = mezcla('#f4f8fb', '#f6e2d6', t);
   ctx.fillRect(0, 0, TEX_W, TEX_H * 0.045);
