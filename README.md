@@ -17,8 +17,10 @@ npm run dev
 | Imágenes pixel art (fondo, decoración, mascota) | `src/config/assets.js` + `public/assets/` |
 | Colores, fuentes y medidas | `src/styles/tokens.css` |
 | Distribución de la pantalla | `src/App.css` |
-| Gráfica pixel con volumen (columnas, suelo, vidrios) | `src/components/Diorama.jsx` |
-| Paisaje provisional dibujado por código | `src/components/Fondo.jsx` |
+| Modelo 3D (columnas, isla, vidrios de París, zoom) | `src/components/Modelo3D.jsx` |
+| Paisaje de día → atardecer | `src/components/Cielo.jsx` |
+| Objetos interactivos del paisaje | `src/config/objetos.js` + `src/components/Sprites.jsx` |
+| Secciones de lectura (anomalía, París, décadas, escuchar, datos) | `src/components/secciones/` |
 | Línea de tiempo / selector de período | `src/components/LineaTiempo.jsx` |
 | Sonido | `src/audio/Sonifier.js` |
 | Datos y cálculos (línea base, ventanas) | `src/lib/gistemp.js` |
@@ -33,4 +35,6 @@ Recomendado: PNG transparentes a resolución nativa (por ejemplo 320×180); se e
 
 ## Recursos libres
 
-React, Vite (MIT) · Press Start 2P y Mulish (SIL Open Font License, servidas localmente con @fontsource) · sonido sintetizado con Web Audio API · datos NASA (dominio público).
+React, Vite, Three.js (MIT) · Pixelify Sans y Mulish (SIL Open Font License, servidas localmente con @fontsource) · sonido sintetizado con Web Audio API · datos NASA (dominio público).
+
+La versión anterior del boceto está en `_version1/`.

@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import '@fontsource/press-start-2p/400.css';
+import '@fontsource/pixelify-sans/500.css';
+import '@fontsource/pixelify-sans/600.css';
 import '@fontsource/mulish/400.css';
 import '@fontsource/mulish/600.css';
 import '@fontsource/mulish/800.css';

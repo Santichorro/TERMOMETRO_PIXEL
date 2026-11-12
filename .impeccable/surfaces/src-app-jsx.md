@@ -7,31 +7,30 @@ related_targets: []
 
 ## Scope
 
-Pantalla principal (única) del Termómetro de la Tierra: explorador interactivo. Modo: Experience. Boceto editable; los assets pixel art decorativos los entregará el equipo y reemplazan los provisionales.
+Página del Termómetro de la Tierra (React + Vite). Explorador arriba y secciones de lectura debajo. Modo: Experience. Boceto editable; el equipo entregará assets pixel art definitivos.
 
 ## Audience and job
 
-Ciudadano sin formación técnica, en celular o en el proyector de clase. Descubre qué es una anomalía, cuánto se calentó el planeta en el período que elige y qué tan cerca está de +1,5 °C, cumpliendo misiones.
+Ciudadano sin formación técnica, en celular o en el proyector de clase. Descubre qué es una anomalía, cuánto se calentó el planeta en el período que elige y qué tan cerca está de +1,5 °C, explorando un modelo 3D, tocando objetos del paisaje y cumpliendo misiones.
 
 ## Direction contract
 
-THESIS: La serie de NASA es un diorama isométrico de juego de construcción: cada año es una columna de bloques pixel cuya altura y color son su anomalía, levantada sobre un terreno pixel frente a un paisaje 2D. Rechaza la página de gráfica de líneas con tarjetas debajo y la landing de héroe + botón.
+THESIS: Un día pixel que se convierte en atardecer rojo a medida que avanzan los años: el paisaje entero es el termómetro. Sobre él flota un modelo 3D de bloques (un año por columna) que se gira y se acerca dentro de su propia ventana difuminada. Rechaza la gráfica plana con tarjetas debajo y el héroe centrado.
 
-OWN-WORLD: Noche pixel de Codédex: fondo azul noche #020617, cielo y montañas en pixel art 2D, terreno isométrico de bloques; columnas con caras clara/oscura en la escala frío→cálido de las franjas; vidrios de +1,5/+2,0 como losas translúcidas con borde ámbar; HUD de juego: paneles oscuros con borde escalonado, botón amarillo #EAB308 con sombra inferior, títulos en Press Start 2P, texto en Mulish.
+OWN-WORLD: Paisaje pixel de referencia Quiet Place / Esipov: cielo celeste con nubes y pinos de día, que vira a naranja, rojo y morado con el calor; sol que baja hacia el horizonte. Transición tramada (dither) hacia secciones de lectura sobre verde-gris pálido con retícula pixel tenue (CyberKongz). Tinta azul noche, acento coral. Títulos en Pixelify Sans, texto en Mulish, cifras en Pixelify Sans. Paneles blancos con borde pixel de 2 px y bisel inferior.
 
-STORY: Ve el siglo como un paisaje que crece, arrastra la línea de tiempo para elegir su período, cambia la referencia NASA⇄preindustrial y ve moverse el suelo, completa misiones que le enseñan cada concepto y se va sabiendo cuánto y qué tan cerca.
+STORY: Llega de día, ve el modelo flotante, arrastra la línea de tiempo y el cielo se enrojece; toca los objetos del paisaje para entender de dónde salen los datos; baja a leer qué es una anomalía, qué dice París y década por década; escucha el siglo; completa misiones.
 
-FIRST VIEWPORT: Diorama a sangre ocupando ~70 % del alto; HUD superior con cifra actual grande (Press Start 2P), distancia a +1,5 y botón de sonido; panel de misiones a la derecha con barra de XP; línea de tiempo de franjas con dos asas abajo, de lado a lado; interruptor de referencia junto a la cifra. Acción principal: arrastrar la línea de tiempo.
+FIRST VIEWPORT: Barra de navegación. Izquierda (5/12): título, una frase, cifra del año activo, distancia a +1,5 e interruptor de referencia. Derecha (7/12): ventana del modelo 3D con bordes difuminados y controles de zoom. Abajo: franja de objetos interactivos sobre el suelo del paisaje y la línea de tiempo de franjas. Acción principal: arrastrar la línea de tiempo o girar el modelo.
 
-FORM: Diorama isométrico de juego de construcción, posición 4 de la lista propia ordenada (asignada por el sorteo, degradado sin retadores); seed:5c20c95541a55975.
+FORM: Paisaje-termómetro de día a atardecer con modelo 3D flotante; dirección fijada por el equipo con referencias (Quiet Place, Maxim Esipov, CyberKongz) sobre la base del diorama asignado; seed:5c20c95541a55975.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
 
 ## Signature interaction
 
-Arrastrar sobre la línea de tiempo: el cursor recorre los años, la columna activa se ilumina y sube un bloque, el cielo se calienta de azul a rojo y suena una nota según la anomalía. El interruptor de referencia desliza todo el diorama 0,22 °C hacia arriba o abajo mientras las columnas no cambian de tamaño relativo.
+Recorrer los años (línea de tiempo, clic en el modelo o "Escuchar el siglo"): la columna activa se ilumina, el sol baja y el cielo pasa de día a atardecer rojo según la anomalía, suena una nota. El modelo se gira arrastrando y se acerca con la rueda o los botones, sin salirse de su ventana.
 
 ## Unresolved
 
-- Assets pixel art definitivos (fondo, terreno, decoración, íconos): pendientes del equipo; los actuales son provisionales dibujados por código.
-- Retos finales: la primera versión trae cuatro misiones; el equipo puede ajustar textos y cantidad.
+- Assets pixel art definitivos pendientes del equipo; el paisaje y los objetos actuales son provisionales dibujados por código.

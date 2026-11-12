@@ -1,44 +1,48 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PixelIcon from './PixelIcon.jsx';
-import { MISIONES, NIVELES } from '../config/misiones.js';
+import { MISIONES } from '../config/misiones.js';
+import { progreso } from '../lib/progreso.js';
+import { fmt } from '../lib/formato.js';
 import { TEXTOS, plantilla } from '../config/textos.js';
 
 // ==========================================================
-// MISIONES con XP. El estado vive en App; aquí solo se muestra
-// y se maneja la misión de adivinar.
+// PANEL DE MISIONES (cajón lateral). El progreso vive en App.
 // ==========================================================
 
-const fmt = v => `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(2).replace('.', ',')}`;
 
-export default function Misiones({ completas, datosLogro, onAdivinar, abierto, onAlternar }) {
+export default function Misiones({ abierto, onCerrar, completas, datosLogro, onAdivinar }) {
   const [estimacion, setEstimacion] = useState(0.5);
-  const xp = MISIONES.filter(m => completas[m.id]).reduce((s, m) => s + m.xp, 0);
-  const total = MISIONES.reduce((s, m) => s + m.xp, 0);
-  const nivel = [...NIVELES].reverse().find(n => xp >= n.xp);
-  const nivelNum = NIVELES.indexOf(nivel) + 1;
-  const hechas = MISIONES.filter(m => completas[m.id]).length;
+  const [pistas, setPistas] = useState({});
+  const { xp, total, nivel, nivelNum, hechas } = progreso(completas);
+
+  useEffect(() => {
+    if (!abierto) return;
+    const tecla = e => e.key === 'Escape' && onCerrar();
+    document.addEventListener('keydown', tecla);
+    return () => document.removeEventListener('keydown', tecla);
+  }, [abierto, onCerrar]);
 
   return (
-    <aside className={`misiones panel ${abierto ? 'abierto' : ''}`} aria-label={TEXTOS.misiones.titulo}>
-      <button type="button" className="misiones-cabeza" onClick={onAlternar} aria-expanded={abierto}>
-        <span className="misiones-titulo">{TEXTOS.misiones.titulo}</span>
-        <span className="misiones-cuenta">
-          {plantilla(TEXTOS.misiones.completas, { c: hechas, t: MISIONES.length })}
-          <span className="misiones-ver"> · {abierto ? 'ocultar' : 'ver'}</span>
-        </span>
-      </button>
+    <aside className={`misiones ${abierto ? 'abierto' : ''}`} aria-label={TEXTOS.misiones.titulo} aria-hidden={!abierto} inert={!abierto}>
+      <div className="misiones-cabeza">
+        <h2>{TEXTOS.misiones.titulo}</h2>
+        <button type="button" className="icono-boton" onClick={onCerrar} aria-label="Cerrar misiones">
+          <PixelIcon nombre="cerrar" tamano={16} />
+        </button>
+      </div>
 
       <div className="xp">
         <div className="xp-fila">
-          <PixelIcon nombre="estrella" tamano={14} color="var(--amarillo-claro)" />
+          <PixelIcon nombre="estrella" tamano={16} color="var(--coral)" />
           <span className="xp-nivel">{plantilla(TEXTOS.misiones.nivel, { n: nivelNum })} · {nivel.nombre}</span>
-          <span className="xp-num">{xp} XP</span>
+          <span className="xp-num">{xp} / {total} XP</span>
         </div>
         <div className="xp-barra" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={xp}>
-          {Array.from({ length: 20 }, (_, i) => (
-            <span key={i} className={i < Math.round((xp / total) * 20) ? 'lleno' : ''} />
+          {Array.from({ length: 24 }, (_, i) => (
+            <span key={i} className={i < Math.round((xp / total) * 24) ? 'lleno' : ''} />
           ))}
         </div>
+        <p className="xp-cuenta">{plantilla(TEXTOS.misiones.completas, { c: hechas, t: MISIONES.length })}</p>
       </div>
 
       <ol className="misiones-lista">
@@ -47,11 +51,18 @@ export default function Misiones({ completas, datosLogro, onAdivinar, abierto, o
           return (
             <li key={m.id} className={`mision ${hecha ? 'hecha' : ''}`}>
               <span className="mision-check" aria-hidden="true">
-                {hecha && <PixelIcon nombre="check" tamano={12} color="var(--noche)" />}
+                {hecha && <PixelIcon nombre="check" tamano={12} color="#fff" />}
               </span>
               <div className="mision-cuerpo">
                 <h3>{m.titulo} <span className="mision-xp">+{m.xp} XP</span></h3>
                 <p>{hecha ? plantilla(m.logro, datosLogro[m.id] ?? {}) : m.texto}</p>
+                {!hecha && (
+                  <button type="button" className="pista-boton" aria-expanded={Boolean(pistas[m.id])}
+                    onClick={() => setPistas(p => ({ ...p, [m.id]: !p[m.id] }))}>
+                    {TEXTOS.misiones.pista}
+                  </button>
+                )}
+                {!hecha && pistas[m.id] && <p className="pista">{m.pista}</p>}
                 {m.tipo === 'adivinar' && !hecha && (
                   <div className="adivinar">
                     <label>
@@ -59,9 +70,7 @@ export default function Misiones({ completas, datosLogro, onAdivinar, abierto, o
                       <input type="range" min="0" max="3" step="0.05" value={estimacion}
                         onChange={e => setEstimacion(Number(e.target.value))} />
                     </label>
-                    <button type="button" className="boton boton-chico" onClick={() => onAdivinar(estimacion)}>
-                      {m.boton}
-                    </button>
+                    <button type="button" className="boton" onClick={() => onAdivinar(estimacion)}>{m.boton}</button>
                   </div>
                 )}
               </div>

@@ -1,0 +1,33 @@
+/* ==========================================================
+   TOKENS DE DISEÑO — edita aquí colores, fuentes y medidas.
+   Inspiración: noche pixel de Codédex.
+   ========================================================== */
+:root {
+  /* Fondo y superficies */
+  --noche: #020617;          /* fondo de la página */
+  --panel: #0b1226;          /* paneles del HUD */
+  --panel-alto: #111a33;     /* panel resaltado / hover */
+  --borde: #2a3657;          /* borde escalonado de paneles */
+  --borde-luz: #3b4a73;      /* línea de luz superior del borde */
+
+  /* Texto */
+  --texto: #e2e8f0;
+  --texto-suave: #94a3b8;
+  --texto-fuerte: #f8fafc;
+
+  /* Acentos */
+  --amarillo: #eab308;       /* botón principal (como Codédex) */
+  --amarillo-sombra: #a16207;
+  --amarillo-claro: #fde047;
+  --verde: #84cc16;          /* misión completa */
+  --rojo: #ef4444;           /* calor / +1,5 °C */
+  --hielo: #7dd3fc;          /* vidrios de París */
+
+  /* Tipografía */
+  --pixel: 'Press Start 2P', monospace;   /* títulos, cifras, botones */
+  --texto-fuente: 'Mulish', system-ui, sans-serif;
+
+  /* Medidas pixel: todo crece en múltiplos de 4 px */
+  --px: 4px;
+  --radio: 0px;              /* el pixel art no redondea esquinas */
+}

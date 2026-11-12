@@ -1,0 +1,32 @@
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--noche);
+  color: var(--texto);
+  font: 400 1rem/1.55 var(--texto-fuente);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--amarillo); color: var(--noche); }
+
+:focus-visible {
+  outline: 2px solid var(--amarillo-claro);
+  outline-offset: 2px;
+}
+
+button, input, select { font: inherit; color: inherit; }
+
+/* Barra de desplazamiento pixel */
+* { scrollbar-color: var(--borde) var(--panel); scrollbar-width: thin; }
+
+/* Las imágenes pixel art nunca se suavizan */
+canvas, .pixel-img { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
