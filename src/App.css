@@ -1,0 +1,241 @@
+/* ==========================================================
+   LAYOUT del explorador — estética pixel tipo Codédex.
+   Los colores y fuentes vienen de styles/tokens.css.
+   ========================================================== */
+
+.app {
+  position: relative;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 12px;
+  padding: 12px 16px 8px;
+  overflow-x: hidden;
+}
+
+/* ---------- Fondo 2D ---------- */
+.fondo { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: var(--noche); }
+.fondo-capa { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center bottom; }
+.fondo-deco { position: absolute; height: auto; }
+.fondo-calor {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, #7f1d1d 0%, #b45309 55%, transparent 100%);
+  mix-blend-mode: soft-light;
+  transition: opacity 0.6s ease-out;
+}
+.app > :not(.fondo) { position: relative; z-index: 1; }
+
+/* ---------- Panel pixel (borde escalonado como Codédex) ---------- */
+.panel {
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  border: 2px solid var(--borde);
+  /* el clip-path recorta sombras externas: la profundidad va por dentro */
+  box-shadow: inset 0 2px 0 var(--borde-luz), inset 0 -4px 0 #050a1c;
+  clip-path: polygon(0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px,
+    100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px));
+}
+
+/* ---------- Barra superior ---------- */
+.barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.marca {
+  display: flex; align-items: center; gap: 10px; margin: 0;
+  font: 400 clamp(0.75rem, 1.6vw, 1rem)/1.3 var(--pixel);
+  color: var(--texto-fuerte);
+  text-shadow: 0 2px 0 #01030d;
+}
+.boton-sonido {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 0 14px;
+  background: var(--panel); color: var(--texto);
+  border: 2px solid var(--borde);
+  font: 400 0.6rem var(--pixel);
+  cursor: pointer;
+}
+.boton-sonido:hover { border-color: var(--borde-luz); }
+.boton-sonido.activo { color: var(--amarillo-claro); border-color: var(--amarillo); }
+
+/* ---------- Escenario: HUD · diorama · misiones ---------- */
+.escenario {
+  display: grid;
+  grid-template-columns: minmax(250px, 300px) minmax(0, 1fr) minmax(250px, 300px);
+  gap: 16px;
+  min-height: 0;
+}
+
+/* HUD */
+.hud { padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 6px; align-self: start; }
+.hud-etiqueta { margin: 0; font-size: 0.8rem; color: var(--texto-suave); }
+.hud-fecha { margin: 0; font: 400 1rem/1.4 var(--pixel); color: var(--texto); text-transform: capitalize; }
+.hud-valor {
+  margin: 2px 0 0;
+  white-space: nowrap;
+  font: 400 clamp(1.3rem, 2.1vw, 1.85rem)/1.15 var(--pixel);
+  color: var(--amarillo-claro);
+  text-shadow: 0 3px 0 var(--amarillo-sombra);
+  letter-spacing: -0.02em;
+}
+.hud-estado { margin: 4px 0 6px; font-size: 0.9rem; color: var(--texto); }
+.error { color: var(--rojo); margin: 0; }
+
+.comparacion { margin: 6px 0 4px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; border-top: 2px dashed var(--borde); padding-top: 12px; }
+.comparacion div { display: grid; gap: 4px; }
+.comparacion dt { font-size: 0.7rem; color: var(--texto-suave); line-height: 1.25; }
+.comparacion dd { margin: 0; font: 400 0.72rem var(--pixel); color: var(--texto-fuerte); }
+.comparacion .cambio dd { color: var(--rojo); }
+
+/* Referencia */
+.referencia { border-top: 2px dashed var(--borde); padding-top: 12px; margin-top: 4px; display: grid; gap: 8px; }
+.referencia-titulo { margin: 0; font-weight: 800; color: var(--texto-fuerte); font-size: 0.95rem; }
+.interruptor { display: grid; grid-template-columns: 1fr 1fr; background: #050a1c; border: 2px solid var(--borde); padding: 3px; gap: 3px; }
+.interruptor button {
+  display: grid; gap: 2px; text-align: left;
+  padding: 8px 10px; min-height: 44px;
+  background: transparent; border: 0; cursor: pointer;
+  color: var(--texto-suave); font-weight: 600; font-size: 0.8rem; line-height: 1.2;
+  transition: background 0.15s ease-out, color 0.15s ease-out;
+}
+.interruptor button small { font: 400 0.55rem var(--pixel); opacity: 0.8; }
+.interruptor button.activo { background: var(--amarillo); color: var(--noche); box-shadow: inset 0 -3px 0 var(--amarillo-sombra); }
+.interruptor button:not(.activo):hover { color: var(--texto); background: var(--panel-alto); }
+.referencia-explica summary { cursor: pointer; font-size: 0.82rem; color: var(--hielo); }
+.referencia-explica p { margin: 6px 0 0; font-size: 0.85rem; color: var(--texto); line-height: 1.5; }
+
+/* Diorama */
+.diorama { position: relative; min-height: 340px; height: 100%; }
+.diorama-canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+.vidrio-label, .nasa-label {
+  position: absolute; left: 2%; transform: translateY(-50%);
+  padding: 4px 6px; background: rgba(2, 6, 23, 0.85);
+  font: 400 0.5rem var(--pixel); color: var(--amarillo-claro);
+  pointer-events: none; white-space: nowrap;
+}
+.vidrio-label.tenue { color: color-mix(in srgb, var(--amarillo-claro) 65%, var(--noche)); }
+.nasa-label { left: auto; right: 2%; color: var(--texto-suave); }
+.activo-label {
+  position: absolute; transform: translate(-50%, -100%);
+  padding: 6px 8px; background: var(--noche); border: 2px solid var(--amarillo);
+  font: 400 0.55rem var(--pixel); color: var(--texto-fuerte); white-space: nowrap;
+  pointer-events: none; text-transform: capitalize;
+  transition: left 0.12s ease-out, top 0.12s ease-out;
+}
+
+/* Misiones */
+.misiones { padding: 14px; display: flex; flex-direction: column; gap: 12px; align-self: start; max-height: 100%; overflow: auto; }
+.misiones-cabeza { display: flex; justify-content: space-between; align-items: baseline; background: none; border: 0; padding: 0; cursor: default; text-align: left; }
+.misiones-titulo { font: 400 0.8rem var(--pixel); color: var(--texto-fuerte); }
+.misiones-cuenta { font-size: 0.8rem; color: var(--texto-suave); }
+.xp { display: grid; gap: 6px; }
+.xp-fila { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; }
+.xp-nivel { color: var(--texto); font-weight: 600; flex: 1; }
+.xp-num { font: 400 0.6rem var(--pixel); color: var(--amarillo-claro); }
+.xp-barra { display: grid; grid-template-columns: repeat(20, 1fr); gap: 2px; padding: 3px; background: #050a1c; border: 2px solid var(--borde); }
+.xp-barra span { height: 8px; background: #1a2442; }
+.xp-barra span.lleno { background: var(--amarillo); box-shadow: inset 0 -2px 0 var(--amarillo-sombra); }
+.misiones-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.mision { display: grid; grid-template-columns: 18px 1fr; gap: 10px; padding: 10px; background: #070e22; border: 2px solid var(--borde); }
+.mision.hecha { border-color: color-mix(in srgb, var(--verde) 60%, var(--borde)); }
+.mision-check { width: 18px; height: 18px; border: 2px solid var(--borde-luz); display: grid; place-items: center; margin-top: 2px; }
+.mision.hecha .mision-check { background: var(--verde); border-color: var(--verde); }
+.mision h3 { margin: 0 0 4px; font-size: 0.88rem; font-weight: 800; color: var(--texto-fuerte); line-height: 1.3; }
+.mision-xp { font: 400 0.5rem var(--pixel); color: var(--amarillo-claro); margin-left: 4px; white-space: nowrap; }
+.mision p { margin: 0; font-size: 0.82rem; color: var(--texto-suave); line-height: 1.45; }
+.mision.hecha p { color: var(--texto); }
+.misiones-final { margin: 0; font-size: 0.85rem; color: var(--verde); font-weight: 700; }
+
+.adivinar { display: grid; gap: 8px; margin-top: 8px; }
+.adivinar label { display: grid; gap: 4px; }
+.adivinar-valor { font: 400 0.75rem var(--pixel); color: var(--amarillo-claro); }
+.adivinar input[type='range'] { width: 100%; accent-color: var(--amarillo); }
+
+/* Botón principal tipo Codédex */
+.boton {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 0 18px;
+  background: var(--amarillo); color: #1c1402;
+  border: 2px solid #1c1402;
+  box-shadow: inset 0 -4px 0 var(--amarillo-sombra), 0 3px 0 #01030d;
+  font: 400 0.65rem var(--pixel);
+  cursor: pointer;
+  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+}
+.boton:hover { background: var(--amarillo-claro); }
+.boton:active { transform: translateY(3px); box-shadow: inset 0 -2px 0 var(--amarillo-sombra), 0 0 0 #01030d; }
+.boton-chico { min-height: 40px; justify-self: start; }
+
+/* ---------- Línea de tiempo ---------- */
+.linea { display: grid; gap: 8px; padding: 0 2px; }
+.linea-cabeza { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.linea-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  min-height: 36px; padding: 0 12px;
+  background: var(--panel); color: var(--texto-suave);
+  border: 2px solid var(--borde); border-radius: 999px;
+  font-weight: 600; font-size: 0.82rem; cursor: pointer;
+}
+.chip:hover { color: var(--texto); }
+.chip.activo { color: #7dd3fc; border-color: #0ea5e9; background: #082f49; }
+.linea-ayuda { margin: 0; font-size: 0.8rem; color: var(--texto-suave); }
+
+.linea-pista { position: relative; height: 56px; margin-top: 14px; cursor: pointer; touch-action: none; user-select: none; }
+.franjas { position: absolute; inset: 10px 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 2px solid #01030d; }
+.franjas span.fuera { filter: saturate(0.25) brightness(0.45); }
+.seleccion { position: absolute; top: 6px; bottom: 6px; border: 2px solid var(--amarillo); pointer-events: none; box-shadow: 0 0 0 2px #01030d; }
+.cursor { position: absolute; top: 2px; bottom: 2px; width: 2px; margin-left: -1px; background: var(--texto-fuerte); pointer-events: none; box-shadow: 0 0 0 1px #01030d; }
+.asa {
+  position: absolute; top: 0; bottom: 0; width: 14px; margin-left: -7px;
+  background: var(--amarillo); border: 2px solid #1c1402;
+  box-shadow: inset 0 -4px 0 var(--amarillo-sombra);
+  cursor: ew-resize;
+}
+.asa:focus-visible { outline: 2px solid var(--texto-fuerte); }
+.asa-anio {
+  position: absolute; bottom: calc(100% + 4px);
+  font: 400 0.55rem var(--pixel); color: var(--amarillo-claro); white-space: nowrap;
+  text-shadow: 0 2px 0 #01030d;
+}
+.asa-desde .asa-anio { left: -2px; }
+.asa-hasta .asa-anio { right: -2px; }
+.hud-valor small { font-size: 0.6em; margin-left: 0.3em; color: var(--texto); text-shadow: none; }
+.activo-label strong { color: var(--amarillo-claro); font-weight: 400; margin-left: 6px; }
+.misiones-ver { display: none; font: 400 0.5rem var(--pixel); color: var(--hielo); }
+.esqueleto { height: 90px; background: linear-gradient(90deg, var(--panel), var(--panel-alto), var(--panel)); background-size: 200% 100%; animation: brillo 1.4s linear infinite; }
+@keyframes brillo { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+.creditos { font-size: 0.72rem; color: var(--texto-suave); text-align: center; padding-bottom: 4px; }
+
+/* Aviso de logro */
+.aviso {
+  position: fixed; left: 50%; top: 72px; z-index: 5;
+  transform: translateX(-50%);
+  padding: 10px 16px; background: var(--verde); color: #0b1a02;
+  border: 2px solid #0b1a02; box-shadow: 0 4px 0 #01030d;
+  font: 400 0.6rem var(--pixel);
+  animation: aparecer 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes aparecer { from { transform: translate(-50%, -12px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .escenario { grid-template-columns: minmax(240px, 280px) minmax(0, 1fr); }
+  .misiones { grid-column: 1 / -1; }
+  .misiones-lista { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 720px) {
+  .app { display: flex; flex-direction: column; padding: 10px 12px 6px; gap: 10px; }
+  .escenario { display: contents; }
+  .barra { order: 0; }
+  .linea { order: 2; }
+  .creditos { order: 5; }
+  .boton-sonido span { display: none; }
+  .escenario { grid-template-columns: 1fr; }
+  .diorama { order: 1; min-height: 0; height: 44vh; flex: none; }
+  .hud { order: 3; }
+  .misiones { order: 4; }
+  .misiones-lista { grid-template-columns: 1fr; display: none; }
+  .misiones.abierto .misiones-lista { display: grid; }
+  .misiones-cabeza { cursor: pointer; }
+  .misiones-ver { display: inline; }
+  .linea-ayuda { display: none; }
+  .comparacion { grid-template-columns: 1fr 1fr 1fr; }
+}
+.hud-nota { display: block; margin-top: 4px; font-size: 0.78rem; color: var(--hielo); }
