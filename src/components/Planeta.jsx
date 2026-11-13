@@ -182,6 +182,7 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
       if (m?.abierto && !celular.matches) camera.setViewOffset(w, h, w * 0.2, 0, w, h);
       else camera.clearViewOffset();
       camera.updateProjectionMatrix();
+      if (m) m.sucio = true;
     };
     let m = null;
     const ro = new ResizeObserver(ajustar);
@@ -251,6 +252,7 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
       });
       // Girar la cámara hacia el objeto abierto
       const e = m.enfoque;
+      const enMovimiento = Boolean(e);
       if (e) {
         const k = Math.min(1, (ahora - e.t0) / 800);
         const suave = 1 - Math.pow(1 - k, 3);
@@ -258,7 +260,8 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
         controls.target.lerpVectors(e.desde.target, e.hacia.target, suave);
         if (k >= 1) m.enfoque = null;
       }
-      controls.update();
+      const giro = controls.update(); // true mientras se arrastra o frena
+      const hayPuntero = punteroNuevo;
       if (punteroNuevo) {
         punteroNuevo = false;
         const id = tocado();
@@ -269,6 +272,9 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
           if (id) cb.current.onSobreObjeto?.();
         }
       }
+      // Con "reducir movimiento" nada se anima solo: se dibuja únicamente si algo cambió
+      if (reducido && !giro && !enMovimiento && !hayPuntero && !m.sucio) return;
+      m.sucio = false;
       colocarEtiqueta(sobreId && sobreId !== m.abierto ? sobreId : null);
       renderer.render(scene, camera);
     };
@@ -279,7 +285,7 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
     document.addEventListener('visibilitychange', actualizarBucle);
     actualizarBucle();
 
-    m = { renderer, controls, camera, textura, ajustar, ciudad, halo, ctx, objetos, reducido, capas: null, actual: null, tween: 0, abierto: null, enfoque: null };
+    m = { renderer, controls, camera, textura, ajustar, ciudad, halo, ctx, objetos, reducido, capas: null, actual: null, tween: 0, abierto: null, enfoque: null, sucio: true };
     motor.current = m;
     let vivo = true;
     cargarCapas().then(capas => {
@@ -337,6 +343,7 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
       m.actual = c;
       pintarTextura(m.ctx, vista, c, m.capas, mezcla);
       m.textura.needsUpdate = true;
+      m.sucio = true;
       const t = Math.max(0, Math.min(1, c.valor / 1.5));
       m.halo.material.color.set(mezcla('#9fd3f0', '#ff8a5c', t));
       m.halo.material.opacity = 0.16 + t * 0.14;

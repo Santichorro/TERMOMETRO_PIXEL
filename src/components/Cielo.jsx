@@ -127,8 +127,10 @@ export default function Cielo({ calor = 0 }) {
   const usarAssets = capas.length > 0;
   const t = Math.max(0, Math.min(1, calor / 1.5));
 
+  const despertar = useRef(null);
   useEffect(() => {
     tObjetivo.current = t;
+    despertar.current?.(); // si el cielo estaba quieto, vuelve a animarse hasta el nuevo color
   }, [t]);
 
   useEffect(() => {
@@ -139,25 +141,35 @@ export default function Cielo({ calor = 0 }) {
     let id;
     let ultimo = 0;
     const inicio = performance.now();
+    let quieto = false;
     const paso = ahora => {
       id = requestAnimationFrame(paso);
       if (ahora - ultimo < 66) return; // ~15 cuadros por segundo: suficiente para pixel art
       ultimo = ahora;
-      actual += (tObjetivo.current - actual) * 0.12;
+      const diferencia = tObjetivo.current - actual;
+      actual += diferencia * 0.12;
       dibujar(ctx, actual, reducido ? 0 : (ahora - inicio) / 1000);
+      // Con "reducir movimiento" las nubes no se mueven: al llegar al color final, se detiene
+      if (reducido && Math.abs(diferencia) < 0.002) {
+        cancelAnimationFrame(id);
+        quieto = true;
+      }
     };
     // Solo se anima mientras el paisaje se ve y la pestaña está activa
     let visible = true;
     const reanudar = () => {
       cancelAnimationFrame(id);
+      quieto = false;
       if (visible && !document.hidden) id = requestAnimationFrame(paso);
     };
+    despertar.current = () => { if (quieto) reanudar(); };
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; reanudar(); });
     io.observe(ref.current);
     document.addEventListener('visibilitychange', reanudar);
     reanudar();
     return () => {
       cancelAnimationFrame(id);
+      despertar.current = null;
       io.disconnect();
       document.removeEventListener('visibilitychange', reanudar);
     };

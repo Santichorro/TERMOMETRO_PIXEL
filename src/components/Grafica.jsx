@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { memo, useRef } from 'react';
 import { stripeColor } from '../lib/colors.js';
 import { fmt } from '../lib/formato.js';
 import PixelIcon from './PixelIcon.jsx';
@@ -15,6 +15,35 @@ const Y_MIN = -0.5;
 const Y_MAX = 2.2;
 const PRESETS = [null, 50, 20, 10];
 const pctY = v => ((Y_MAX - v) / (Y_MAX - Y_MIN)) * 100;
+
+// Barras: memorizadas. Al recorrer los años solo cambia el contorno del año activo
+// (un solo <rect> aparte), no se vuelven a crear las ~100 barras.
+const BarrasFijas = memo(function BarrasFijas({ anios, primero, piso, desde, hasta }) {
+  const y0 = pctY(piso);
+  return anios.map(a => {
+    const y1 = pctY(a.value);
+    const fuera = a.year < desde || a.year > hasta;
+    return (
+      <rect key={a.year} x={a.year - primero + 0.12} width={0.76}
+        y={Math.min(y0, y1)} height={Math.max(0.6, Math.abs(y0 - y1))}
+        fill={stripeColor(a.value)} opacity={fuera ? 0.28 : 1} />
+    );
+  });
+});
+
+function Barras({ anios, primero, total, piso, desde, hasta, activo }) {
+  const y0 = pctY(piso);
+  const y1 = activo ? pctY(activo.value) : 0;
+  return (
+    <svg className="grafica-barras" viewBox={`0 0 ${total} 100`} preserveAspectRatio="none" shapeRendering="crispEdges" aria-hidden="true">
+      <BarrasFijas anios={anios} primero={primero} piso={piso} desde={desde} hasta={hasta} />
+      {activo && (
+        <rect className="activa" x={activo.year - primero + 0.12} width={0.76}
+          y={Math.min(y0, y1)} height={Math.max(0.6, Math.abs(y0 - y1))} fill={stripeColor(activo.value)} />
+      )}
+    </svg>
+  );
+}
 
 export default function Grafica({ anios, rango, onRango, anioActivo, onRecorrer, onSobre, piso, enRef, reproduciendo, onReproducir }) {
   const areaRef = useRef(null);
@@ -100,20 +129,7 @@ export default function Grafica({ anios, rango, onRango, anioActivo, onRecorrer,
           <span className="grafica-umbral u20" style={{ top: `${pctY(2.0)}%` }}><em>{TEXTOS.vidrios.p20}</em></span>
           <span className="grafica-cero" style={{ top: `${pctY(piso)}%` }}><em>{piso > 0.05 ? TEXTOS.grafica.ceroNasa : TEXTOS.grafica.ceroPre}</em></span>
 
-          <svg className="grafica-barras" viewBox={`0 0 ${total} 100`} preserveAspectRatio="none" shapeRendering="crispEdges" aria-hidden="true">
-            {anios.map(a => {
-              const i = a.year - primero;
-              const y1 = pctY(a.value);
-              const y0 = pctY(piso);
-              const fuera = a.year < rango[0] || a.year > rango[1];
-              return (
-                <rect key={a.year} x={i + 0.12} width={0.76}
-                  y={Math.min(y0, y1)} height={Math.max(0.6, Math.abs(y0 - y1))}
-                  fill={stripeColor(a.value)} opacity={fuera ? 0.28 : 1}
-                  className={a.year === anioActivo ? 'activa' : ''} />
-              );
-            })}
-          </svg>
+          <Barras anios={anios} primero={primero} total={total} piso={piso} desde={rango[0]} hasta={rango[1]} activo={activo} />
 
           <div className="seleccion" style={{ left: `${pctX(rango[0])}%`, width: `${pctX(rango[1] + 1) - pctX(rango[0])}%` }} />
           {activo && (

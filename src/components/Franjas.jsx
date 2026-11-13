@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { memo, useRef } from 'react';
 import { stripeColor } from '../lib/colors.js';
 import { TEXTOS } from '../config/textos.js';
 
@@ -8,6 +8,18 @@ import { TEXTOS } from '../config/textos.js';
 // - Pasar el puntero o arrastrar dentro del período: recorre los años.
 // - Asas amarillas: cambian el período (también con el teclado).
 // ==========================================================
+
+// Franjas de color memorizadas: no se recrean al recorrer los años
+const Colores = memo(function Colores({ anios, desde, hasta }) {
+  return (
+    <div className="franjas-colores" aria-hidden="true">
+      {anios.map(a => (
+        <span key={a.year} style={{ background: stripeColor(a.value) }}
+          className={a.year < desde || a.year > hasta ? 'fuera' : ''} />
+      ))}
+    </div>
+  );
+});
 
 export default function Franjas({ anios, rango, onRango, anioActivo, onRecorrer }) {
   const pistaRef = useRef(null);
@@ -59,12 +71,7 @@ export default function Franjas({ anios, rango, onRango, anioActivo, onRecorrer 
     <div className="franjas-planeta">
       <div className="franjas-pista" ref={pistaRef}
         onPointerDown={abajo} onPointerMove={movimiento} onPointerUp={arriba} onPointerCancel={arriba}>
-        <div className="franjas-colores" aria-hidden="true">
-          {anios.map(a => (
-            <span key={a.year} style={{ background: stripeColor(a.value) }}
-              className={a.year < rango[0] || a.year > rango[1] ? 'fuera' : ''} />
-          ))}
-        </div>
+        <Colores anios={anios} desde={rango[0]} hasta={rango[1]} />
         {anioActivo != null && <div className="franjas-cursor" style={{ left: `${pos(anioActivo + 0.5)}%` }} />}
         {['desde', 'hasta'].map(asa => {
           const y = asa === 'desde' ? rango[0] : rango[1];

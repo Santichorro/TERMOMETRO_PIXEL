@@ -56,6 +56,10 @@ Contornos de continentes: `world-atlas` (Natural Earth, dominio público) leído
 - La textura del planeta se repinta como máximo ~30 veces por segundo durante las transiciones; las secciones de lectura usan `memo` y no se redibujan al recorrer los años.
 - En celular el planeta se dibuja menos pixelado (1/1,5 de la resolución en vez de 1/3).
 - Fuentes: solo alfabeto latino y los pesos usados. El CSV de NASA se precarga desde `index.html`.
+- Con "reducir movimiento" activado en el sistema, el planeta y el cielo solo se redibujan cuando algo cambia (en reposo: ~94 % menos CPU).
+- Las barras de la gráfica y las franjas están memorizadas: al recorrer los años solo se mueve el resaltado del año activo.
+- `vercel.json`: los archivos de `/assets` (con hash) quedan en caché un año; el CSV, una hora.
+- `world-atlas` y `topojson-client` son dependencias de desarrollo: solo las usa `scripts/generar-sprite.mjs`.
 
 ## Fuente: el "5" pixel
 

@@ -300,6 +300,13 @@
 @media (max-width: 900px) {
   .escena-contenido, .seccion-grid, .seccion-grid.invertida { grid-template-columns: 1fr; }
   .seccion-grid.invertida > :first-child { order: 2; }
+  /* Mira los números: título y frase, luego la tabla, y al final descargas e importación */
+  #tabla .seccion-grid { display: flex; flex-direction: column; align-items: stretch; }
+  #tabla .seccion-texto { display: contents; }
+  #tabla .seccion-texto h2 { order: 1; }
+  #tabla .seccion-texto .lead { order: 2; }
+  #tabla .tabla-panel { order: 3; }
+  #tabla .seccion-texto > :not(h2):not(.lead) { order: 4; }
   .hoy dl { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 640px) {
