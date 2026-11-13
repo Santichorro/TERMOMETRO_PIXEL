@@ -24,7 +24,7 @@
   --hielo: #2f7ea8;          /* umbrales de París */
 
   /* Tipografía */
-  --display: 'Pixelify Sans', 'Mulish', system-ui, sans-serif;
+  --display: 'Pixelify Cinco', 'Pixelify Sans', 'Mulish', system-ui, sans-serif; /* Pixelify Cinco = solo el 5 (ver cinco.css) */
   --texto: 'Mulish', system-ui, sans-serif;
 
   /* Escala */

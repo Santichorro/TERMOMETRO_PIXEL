@@ -1,11 +1,11 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useGistemp from './lib/useGistemp.js';
-import { compareWindows, buildPathItems, annualMeans, decadeMeans, average } from './lib/gistemp.js';
+import { compareWindows, buildPathItems, annualMeans, decadeMeans, average, warmestMonth, countAbove } from './lib/gistemp.js';
 import { stripeColor } from './lib/colors.js';
 import { fmt } from './lib/formato.js';
 import Sonifier from './audio/Sonifier.js';
 import Cielo from './components/Cielo.jsx';
-import Objetos from './components/Objetos.jsx';
+import FichaObjeto from './components/Objetos.jsx';
 import Grafica from './components/Grafica.jsx';
 import Logro from './components/Logro.jsx';
 import Franjas from './components/Franjas.jsx';
@@ -19,6 +19,7 @@ import Paris from './components/secciones/Paris.jsx';
 import Decadas from './components/secciones/Decadas.jsx';
 import Escuchar from './components/secciones/Escuchar.jsx';
 import Datos from './components/secciones/Datos.jsx';
+import Tabla from './components/secciones/Tabla.jsx';
 import { TEXTOS, plantilla } from './config/textos.js';
 import { MISIONES } from './config/misiones.js';
 import './App.css';
@@ -29,6 +30,7 @@ const Planeta = lazy(() => import('./components/Planeta.jsx'));
 
 export default function App() {
   const datos = useGistemp();
+  const cargarDatos = datos.cargarArchivo;
   const series = useMemo(() => datos.series ?? [], [datos.series]);
   const offset = datos.baselineOffset ?? -0.218;
 
@@ -52,8 +54,10 @@ export default function App() {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [misionesAbiertas, setMisionesAbiertas] = useState(false);
   const objetosVistos = useRef(new Set());
+  const [objetoAbierto, setObjetoAbierto] = useState(null);
   const [decadaSel, setDecadaSel] = useState(null);
   const [reproduciendo, setReproduciendo] = useState(false);
+  const [avisoArchivo, setAvisoArchivo] = useState(null);
   const audio = useRef(null);
   const logroTimer = useRef(null);
   const interacciones = useRef({});
@@ -77,14 +81,30 @@ export default function App() {
   const decadaCalida = useMemo(() => decadas.reduce((a, b) => (b.value > a.value ? b : a), decadas[0] ?? { value: -Infinity }), [decadas]);
   const ultimos12 = useMemo(() => average(series.slice(-12).map(d => d.anomalyPreindustrial)), [series]);
   const ultimos20 = useMemo(() => average(series.slice(-240).map(d => d.anomalyPreindustrial)), [series]);
+  // Cifras del momento (como en el tutorial): último mes, mes récord y meses sobre +1,5 en 24
+  const hoy = useMemo(() => {
+    if (!series.length) return null;
+    const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const nombre = d => `${MESES[d.month - 1]} de ${d.year}`;
+    const ultimo = series.at(-1);
+    const rec = warmestMonth(series);
+    return {
+      ultimo: { valor: ultimo.anomalyPreindustrial, etiqueta: nombre(ultimo) },
+      record: { valor: rec.anomalyPreindustrial, etiqueta: nombre(rec) },
+      sobre15: `${countAbove(series.slice(-24), 1.5)} de 24`,
+    };
+  }, [series]);
+  const fuente = useMemo(() => (datos.estado === 'listo'
+    ? { fuente: datos.nombre, meses: datos.meses.toLocaleString('es-CO'), inicio: datos.inicio }
+    : null), [datos.estado, datos.nombre, datos.meses, datos.inicio]);
 
-  const valoresTexto = {
+  const valoresTexto = useMemo(() => ({
     offset: fmt(offset),
     ultimos12: fmt(ultimos12),
     inicio: series[0]?.date ?? '',
     fin: series.at(-1)?.date ?? '',
     meses: series.length.toLocaleString('es-CO'),
-  };
+  }), [offset, ultimos12, series]);
 
   const ejemplo = useMemo(() => {
     if (!completos.length) return null;
@@ -181,11 +201,11 @@ export default function App() {
     if (r[0] !== primero || r[1] !== ultimo) completar('rango');
   };
 
-  const cambiarReferencia = r => {
+  const cambiarReferencia = useCallback(r => {
     if (r === referencia) return;
     setReferencia(r);
     completar('referencia', { offset: fmt(-offset).replace('+', '') });
-  };
+  }, [referencia, offset, completar]);
 
   const interaccionModelo = tipo => {
     interacciones.current[tipo] = true;
@@ -193,20 +213,37 @@ export default function App() {
     if (i.girar && (i.zoom || i.vista)) completar('modelo');
   };
 
+  const cerrarObjeto = useCallback(() => setObjetoAbierto(null), []);
   const abrirObjeto = id => {
+    setObjetoAbierto(a => (a === id ? null : id));
     objetosVistos.current.add(id);
     const m = MISIONES.find(x => x.tipo === 'objetos');
-    if (objetosVistos.current.size >= (m?.cantidad ?? 3)) completar('objetos');
+    if (objetosVistos.current.size >= (m?.cantidad ?? 4)) completar('objetos');
   };
 
-  const elegirDecada = d => {
+  const elegirDecada = useCallback(d => {
     const desde = Math.max(primero, d.decade);
     const hasta = Math.min(ultimo, d.decade + 9);
     setRangoElegido([desde, hasta]);
     setClaveActiva(null);
     setDecadaSel(d.decade);
     if (d.decade === decadaCalida.decade) completar('decada', { decada: `${d.decade}`, valor: fmt(d.value) });
-  };
+  }, [primero, ultimo, decadaCalida, completar]);
+
+  // Otro CSV compatible: si sirve, reemplaza los datos y reinicia el explorador
+  const cargarArchivo = useCallback(async archivo => {
+    try {
+      await cargarDatos(archivo);
+      setRangoElegido(null);
+      setClaveActiva(null);
+      setDecadaSel(null);
+      setReproduciendo(false);
+      setAvisoArchivo({ tipo: 'ok', texto: plantilla(TEXTOS.tabla.cargado, { nombre: archivo.name }) });
+    } catch (e) {
+      const motivo = e.message.charAt(0).toLowerCase() + e.message.slice(1);
+      setAvisoArchivo({ tipo: 'error', texto: plantilla(TEXTOS.tabla.errorCsv, { nombre: archivo.name, error: motivo }) });
+    }
+  }, [cargarDatos]);
 
   const adivinar = estimacion => {
     completar('adivinar', { real: fmt(ultimos12), tuyo: fmt(estimacion) });
@@ -320,13 +357,13 @@ export default function App() {
             }>
               <Planeta valor={activo?.value} valorNasa={activo ? activo.value + offset : undefined}
                 anio={activo ? activo.year + ((activo.month ?? 1) - 1) / 12 : undefined} onInteraccion={interaccionModelo}
-                etiqueta={activo ? `${activo.label} · ${fmt(enRef(activo.value))} °C` : ''}>
+                etiqueta={activo ? `${activo.label} · ${fmt(enRef(activo.value))} °C` : ''}
+                objetoAbierto={objetoAbierto} onObjeto={abrirObjeto} onSobreObjeto={() => audio.current?.hover()}
+                ficha={<FichaObjeto id={objetoAbierto} datos={valoresTexto} onCerrar={cerrarObjeto} />}>
                 {franjas}
               </Planeta>
             </Suspense>
           </div>
-
-          <Objetos datos={valoresTexto} onAbrir={abrirObjeto} />
 
           <div className="escena-grafica panel">
             <Grafica anios={anios} rango={rango} onRango={cambiarRango} anioActivo={activo?.year} onRecorrer={recorrerAnio}
@@ -340,12 +377,23 @@ export default function App() {
           progreso={items.length > 1 ? indiceActivo / (items.length - 1) : 0}
           etiqueta={activo ? `${activo.label} ${fmt(enRef(activo.value))} °C` : ''} rango={rango} />
         <Anomalia referencia={referencia} onReferencia={cambiarReferencia} ejemplo={ejemplo} offset={offset} />
-        <Paris ultimos12={ultimos12} ultimos20={ultimos20} />
+        <Paris ultimos12={ultimos12} ultimos20={ultimos20} hoy={hoy} />
         <Decadas decadas={decadas} seleccion={decadaSel} onElegir={elegirDecada} />
         <Datos valores={valoresTexto} />
+        <Tabla series={series} offset={offset} fuente={fuente} aviso={avisoArchivo} onArchivo={cargarArchivo} />
       </main>
 
-      <footer className="pie">{TEXTOS.creditos}</footer>
+      <footer className="pie">
+        <div className="pie-enlaces">
+          <a className="enlace" href="https://data.giss.nasa.gov/gistemp/" target="_blank" rel="noreferrer">
+            <PixelIcon nombre="externo" tamano={14} />{TEXTOS.datos.enlace}
+          </a>
+          <a className="enlace" href="https://github.com/Santichorro/TERMOMETRO_PIXEL" target="_blank" rel="noreferrer">
+            <PixelIcon nombre="codigo" tamano={14} />{TEXTOS.pie.repo}
+          </a>
+        </div>
+        <p>{TEXTOS.pie.creditos}</p>
+      </footer>
 
       <Misiones abierto={misionesAbiertas} onCerrar={() => setMisionesAbiertas(false)}
         completas={completas} datosLogro={datosLogro} onAdivinar={adivinar} />

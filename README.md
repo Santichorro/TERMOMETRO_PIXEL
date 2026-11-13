@@ -1,4 +1,4 @@
-# Termómetro de la Tierra · boceto pixel art
+# 1 point 5 · Termómetro de la Tierra (pixel art)
 
 Explorador interactivo de las anomalías de temperatura global (NASA GISTEMP v4), estética pixel art tipo Codédex.
 Proyecto 3.3 · Arquitectura de Sistemas Multimedia (UAO).
@@ -24,6 +24,9 @@ npm run dev
 | Gráfica 2D de barras / selector de período | `src/components/Grafica.jsx` |
 | Franjas bajo el planeta (mismo período y año que la gráfica) | `src/components/Franjas.jsx` |
 | Aviso de logro (estilo Xbox, 3 s) | `src/components/Logro.jsx` |
+| Objetos 3D del planeta (fábrica, estación, boya, glaciar, arrecife, termómetro) | `src/lib/objetos3d.js` · ubicación y textos en `src/config/objetos.js` |
+| Ficha de un objeto | `src/components/Objetos.jsx` |
+| Tabla mes a mes, descargar JSON, cargar otro CSV | `src/components/secciones/Tabla.jsx` |
 | Sonido | `src/audio/Sonifier.js` |
 | Datos y cálculos (línea base, ventanas) | `src/lib/gistemp.js` |
 
@@ -49,5 +52,11 @@ Contornos de continentes: `world-atlas` (Natural Earth, dominio público) leído
 - Los continentes vienen pre-dibujados en `src/assets/tierra-sprite.png` (21 KB). Se regenera con `scripts/generar-sprite.mjs` solo si cambia el mapa.
 - El campo de colores del mapa se calcula a 128×64 con tablas precalculadas; la textura es de 512×256.
 - El planeta se dibuja a 1/3 de resolución y a ~30 cuadros por segundo; el planeta y el cielo se pausan fuera de pantalla o con la pestaña oculta.
-- Edificios con `InstancedMesh` (3 llamadas de dibujo).
+- Edificios con `InstancedMesh` (3 llamadas de dibujo); las piezas fijas de cada objeto 3D se funden en una sola malla. Todo el planeta: unas 17 llamadas de dibujo.
+- La textura del planeta se repinta como máximo ~30 veces por segundo durante las transiciones; las secciones de lectura usan `memo` y no se redibujan al recorrer los años.
+- En celular el planeta se dibuja menos pixelado (1/1,5 de la resolución en vez de 1/3).
 - Fuentes: solo alfabeto latino y los pesos usados. El CSV de NASA se precarga desde `index.html`.
+
+## Fuente: el "5" pixel
+
+El 5 de Pixelify Sans se confunde con la S. `src/assets/fuentes/pixelify-cinco-*.woff2` son la Pixelify original con el 5 redibujado y recortadas a ese único carácter (~660 bytes). `src/styles/cinco.css` las declara como la familia 'Pixelify Cinco', que va primero en `--display` (tokens.css): el navegador la usa solo para el 5 y para lo demás sigue con Pixelify Sans. Para cambiar el dibujo: edita `MAPA` en `scripts/generar-cinco.py` y ejecútalo (`pip install fonttools brotli`).

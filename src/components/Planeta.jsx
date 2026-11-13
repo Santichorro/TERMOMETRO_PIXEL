@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import spriteTierra from '../assets/tierra-sprite.png';
-import { TEX_W, TEX_H, ESCALA_NASA, prepararCapas, pintarTextura } from '../lib/texturaPlaneta.js';
+import { TEX_W, TEX_H, prepararCapas, pintarTextura } from '../lib/texturaPlaneta.js';
+import { crearObjetos3D } from '../lib/objetos3d.js';
+import { OBJETOS } from '../config/objetos.js';
 import { TEXTOS } from '../config/textos.js';
 import PixelIcon from './PixelIcon.jsx';
 
@@ -16,13 +18,15 @@ import PixelIcon from './PixelIcon.jsx';
 //
 // Rendimiento:
 //  - Este componente (y Three.js) se carga aparte, después de pintar la página.
-//  - Se dibuja a 1/3 de resolución (look pixel art) y a ~30 cuadros por segundo.
+//  - Se dibuja a 1/3 de resolución en PC (look pixel art) y a 1/1,5 en celular
+//    (pantallas pequeñas: menos pixelado para que se lea), a ~30 cuadros por segundo.
 //  - Se detiene cuando el planeta sale de pantalla o la pestaña está oculta.
 //  - Edificios con InstancedMesh: 3 llamadas de dibujo en lugar de ~90.
 //  - La textura solo se repinta cuando cambia el año o la vista.
 // ==========================================================
 
 const PIX = 3;
+const PIX_CELULAR = 1.5;
 const RADIO = 3;
 const FPS_MS = 1000 / 30;
 
@@ -93,16 +97,18 @@ function cargarCapas() {
   return capasPromesa;
 }
 
-export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccion, children }) {
+export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccion, objetoAbierto, onObjeto, onSobreObjeto, ficha, children }) {
   const ventanaRef = useRef(null);
   const canvasRef = useRef(null);
   const motor = useRef(null);
   const [vista, setVista] = useState('mapa');
   const [enfocado, setEnfocado] = useState(false);
   const [listo, setListo] = useState(false);
+  const tipRef = useRef(null);
+  const [sobre, setSobre] = useState(null);
   const cb = useRef({});
   useEffect(() => {
-    cb.current = { onInteraccion };
+    cb.current = { onInteraccion, onObjeto, onSobreObjeto };
   });
 
   // ---------- Montaje ----------
@@ -150,24 +156,34 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
     ciudad.visible = false;
     globo.add(ciudad);
 
+    // Objetos interactivos (fábrica, estación, boya, termómetro)
+    const objetos = crearObjetos3D(OBJETOS, enEsfera, RADIO);
+    objetos.forEach(o => globo.add(o));
+
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.enablePan = false;
     controls.enableZoom = false;
-    controls.minDistance = 6;
+    controls.minDistance = 3.5;
     controls.maxDistance = 20;
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.8;
     controls.addEventListener('start', () => cb.current.onInteraccion?.('girar'));
 
+    const celular = window.matchMedia('(max-width: 640px)');
     const ajustar = () => {
       const { clientWidth: w, clientHeight: h } = ventana;
       if (!w || !h) return;
-      renderer.setSize(Math.ceil(w / PIX), Math.ceil(h / PIX), false);
+      const pix = celular.matches ? PIX_CELULAR : PIX;
+      renderer.setSize(Math.ceil(w / pix), Math.ceil(h / pix), false);
       camera.aspect = w / h;
+      // Con una ficha abierta en PC el planeta se corre a la izquierda y la ficha va a la derecha
+      if (m?.abierto && !celular.matches) camera.setViewOffset(w, h, w * 0.2, 0, w, h);
+      else camera.clearViewOffset();
       camera.updateProjectionMatrix();
     };
+    let m = null;
     const ro = new ResizeObserver(ajustar);
     ro.observe(ventana);
     ajustar();
@@ -176,6 +192,51 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
     if (reducido) controls.autoRotate = false;
 
     // Bucle a ~30 cuadros por segundo, solo mientras se ve
+    // ---------- Selección de objetos con el puntero ----------
+    const rayo = new THREE.Raycaster();
+    const puntero = new THREE.Vector2();
+    let punteroNuevo = false;
+    let sobreId = null;
+    let presion = null;
+    const ndc = e => {
+      const r = canvas.getBoundingClientRect();
+      puntero.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    };
+    const tocado = () => {
+      rayo.setFromCamera(puntero, camera);
+      const hit = rayo.intersectObjects(objetos, true)[0];
+      return hit?.object.userData.objetoId ?? null;
+    };
+    const mover = e => { if (e.pointerType === 'mouse') { ndc(e); punteroNuevo = true; } };
+    const salir = () => { punteroNuevo = false; if (sobreId) { sobreId = null; setSobre(null); canvas.style.cursor = ''; } };
+    const abajo = e => { presion = { x: e.clientX, y: e.clientY }; };
+    const arriba = e => {
+      if (!presion || Math.hypot(e.clientX - presion.x, e.clientY - presion.y) > 6) return;
+      ndc(e);
+      const id = tocado();
+      if (id) cb.current.onObjeto?.(id);
+    };
+    canvas.addEventListener('pointermove', mover);
+    canvas.addEventListener('pointerleave', salir);
+    canvas.addEventListener('pointerdown', abajo);
+    canvas.addEventListener('pointerup', arriba);
+
+    // Etiqueta flotante sobre el objeto señalado (se mueve sin re-renderizar React)
+    const proy = new THREE.Vector3();
+    const normal = new THREE.Vector3();
+    const colocarEtiqueta = id => {
+      const el = tipRef.current;
+      if (!el) return;
+      const o = id && objetos.find(x => x.userData.id === id);
+      if (!o) { el.style.opacity = '0'; return; }
+      o.getWorldPosition(proy);
+      normal.copy(proy).normalize();
+      const deFrente = normal.dot(proy.clone().sub(camera.position).normalize().negate()) > 0.15;
+      proy.add(normal.multiplyScalar(0.62 * o.scale.x)).project(camera);
+      el.style.opacity = deFrente ? '1' : '0';
+      el.style.transform = `translate(${((proy.x + 1) / 2) * ventana.clientWidth}px, ${((1 - proy.y) / 2) * ventana.clientHeight}px) translate(-50%, -100%)`;
+    };
+
     const reloj = new THREE.Clock();
     let previo = 0;
     const cuadro = ahora => {
@@ -183,7 +244,32 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
       previo = ahora;
       const t = reloj.getElapsedTime();
       globo.position.y = reducido ? 0 : Math.sin(t * 0.9) * 0.06;
+      objetos.forEach(o => {
+        if (!reducido) o.userData.animar?.(t);
+        const s = 1 + (reducido ? 0 : Math.sin(t * 3) * 0.18);
+        o.userData.aro.scale.setScalar(o.userData.id === m.abierto ? 0.75 : o.userData.id === sobreId ? 1.35 : s);
+      });
+      // Girar la cámara hacia el objeto abierto
+      const e = m.enfoque;
+      if (e) {
+        const k = Math.min(1, (ahora - e.t0) / 800);
+        const suave = 1 - Math.pow(1 - k, 3);
+        camera.position.lerpVectors(e.desde.pos, e.hacia.pos, suave);
+        controls.target.lerpVectors(e.desde.target, e.hacia.target, suave);
+        if (k >= 1) m.enfoque = null;
+      }
       controls.update();
+      if (punteroNuevo) {
+        punteroNuevo = false;
+        const id = tocado();
+        if (id !== sobreId) {
+          sobreId = id;
+          canvas.style.cursor = id ? 'pointer' : '';
+          setSobre(id);
+          if (id) cb.current.onSobreObjeto?.();
+        }
+      }
+      colocarEtiqueta(sobreId && sobreId !== m.abierto ? sobreId : null);
       renderer.render(scene, camera);
     };
     let enPantalla = true;
@@ -193,7 +279,8 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
     document.addEventListener('visibilitychange', actualizarBucle);
     actualizarBucle();
 
-    motor.current = { renderer, controls, camera, textura, ciudad, halo, ctx, capas: null, actual: null, tween: 0 };
+    m = { renderer, controls, camera, textura, ajustar, ciudad, halo, ctx, objetos, reducido, capas: null, actual: null, tween: 0, abierto: null, enfoque: null };
+    motor.current = m;
     let vivo = true;
     cargarCapas().then(capas => {
       if (!vivo) return;
@@ -206,6 +293,10 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
       cancelAnimationFrame(motor.current?.tween);
       renderer.setAnimationLoop(null);
       io.disconnect();
+      canvas.removeEventListener('pointermove', mover);
+      canvas.removeEventListener('pointerleave', salir);
+      canvas.removeEventListener('pointerdown', abajo);
+      canvas.removeEventListener('pointerup', arriba);
       document.removeEventListener('visibilitychange', actualizarBucle);
       ro.disconnect();
       controls.dispose();
@@ -231,6 +322,12 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
     const DUR = 420;
     const paso = ahora => {
       const k = Math.min(1, (ahora - t0) / DUR);
+      // La textura se repinta a ~30 por segundo como máximo (el último paso siempre se pinta)
+      if (k < 1 && ahora - (m.ultimaPintura ?? 0) < 32) {
+        m.tween = requestAnimationFrame(paso);
+        return;
+      }
+      m.ultimaPintura = ahora;
       const e = 1 - Math.pow(1 - k, 3);
       const c = {
         valor: desde.valor + (destino.valor - desde.valor) * e,
@@ -243,10 +340,40 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
       const t = Math.max(0, Math.min(1, c.valor / 1.5));
       m.halo.material.color.set(mezcla('#9fd3f0', '#ff8a5c', t));
       m.halo.material.opacity = 0.16 + t * 0.14;
+      m.objetos.forEach(o => o.userData.calor?.(c.valor)); // termómetro y coral
       if (k < 1) m.tween = requestAnimationFrame(paso);
     };
     m.tween = requestAnimationFrame(paso);
   }, [valor, valorNasa, anio, vista, listo]);
+
+  // ---------- Al abrir un objeto: la cámara gira hacia él y se detiene ----------
+  useEffect(() => {
+    const m = motor.current;
+    if (!m) return;
+    const anterior = m.abierto;
+    m.abierto = objetoAbierto ?? null;
+    m.ajustar();
+    const desde = { pos: m.camera.position.clone(), target: m.controls.target.clone() };
+    const o = objetoAbierto && m.objetos.find(x => x.userData.id === objetoAbierto);
+    if (!o) {
+      m.controls.autoRotate = !m.reducido;
+      // Al cerrar: volver a mirar el planeta entero desde donde estaba la cámara
+      if (anterior) {
+        const pos = desde.pos.clone().sub(desde.target).normalize().multiplyScalar(12.5);
+        m.enfoque = { desde, hacia: { pos, target: new THREE.Vector3() }, t0: performance.now() };
+      }
+      return;
+    }
+    m.controls.autoRotate = false;
+    // Acercarse al objeto y mirarlo de costado (desde su "sur"), de pie en pantalla
+    const punto = o.getWorldPosition(new THREE.Vector3());
+    const normal = punto.clone().normalize();
+    const arriba = new THREE.Vector3(0, 1, 0);
+    const tangente = arriba.sub(normal.clone().multiplyScalar(arriba.dot(normal))).normalize();
+    const dir = normal.clone().sub(tangente.multiplyScalar(0.8)).normalize();
+    const target = punto.clone().add(normal.clone().multiplyScalar(0.35 * o.scale.x));
+    m.enfoque = { desde, hacia: { pos: target.clone().add(dir.multiplyScalar(6.6)), target }, t0: performance.now() };
+  }, [objetoAbierto]);
 
   // ---------- Zoom solo con el planeta enfocado ----------
   useEffect(() => {
@@ -278,8 +405,10 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
   const reiniciar = () => {
     const m = motor.current;
     if (!m) return;
+    m.enfoque = null;
     m.camera.position.set(0, 2.2, 12.5);
     m.controls.target.set(0, 0, 0);
+    m.controls.autoRotate = !m.reducido && !m.abierto;
   };
   const cambiarVista = v => {
     setVista(v);
@@ -297,19 +426,22 @@ export default function Planeta({ valor, valorNasa, anio, etiqueta, onInteraccio
       <div className="planeta-ventana" ref={ventanaRef} onPointerDown={() => setEnfocado(true)}>
         <canvas ref={canvasRef} className="planeta-canvas" role="img" aria-label={TEXTOS.planeta.aria} />
         {etiqueta && <span className="planeta-etiqueta">{etiqueta}</span>}
+        <span ref={tipRef} className="planeta-tip" aria-hidden="true">
+          {OBJETOS.find(o => o.id === sobre)?.nombre}
+        </span>
       </div>
-      {vista === 'mapa' && (
-          <div className="planeta-leyenda" aria-label={TEXTOS.planeta.leyenda}>
-            <span className="leyenda-barra" style={{ background: `linear-gradient(90deg, ${ESCALA_NASA.filter(([v]) => v >= -2 && v <= 4).map(([v, c]) => `rgb(${c.join(',')}) ${((v + 2) / 6) * 100}%`).join(', ')})` }} />
-            <span className="leyenda-marcas">{[-2, 0, 2, 4].map(v => <span key={v}>{v > 0 ? `+${v}` : v}</span>)}</span>
-            <small>{TEXTOS.planeta.leyenda}</small>
-          </div>
-        )}
       <div className="planeta-controles">
         <button type="button" onClick={() => zoom(0.82)} aria-label="Acercar"><PixelIcon nombre="mas" tamano={16} /></button>
         <button type="button" onClick={() => zoom(1.22)} aria-label="Alejar"><PixelIcon nombre="menos" tamano={16} /></button>
         <button type="button" onClick={reiniciar} aria-label="Volver a la vista inicial"><PixelIcon nombre="girar" tamano={16} /></button>
       </div>
+      {/* Acceso por teclado a los objetos del planeta (visibles al recibir foco) */}
+      <div className="planeta-puntos" role="group" aria-label={TEXTOS.planeta.puntos}>
+        {OBJETOS.map(o => (
+          <button key={o.id} type="button" aria-pressed={objetoAbierto === o.id} onClick={() => onObjeto?.(o.id)}>{o.nombre}</button>
+        ))}
+      </div>
+      {ficha}
       <p className="planeta-ayuda">
         <span className="ayuda-raton">{enfocado ? TEXTOS.planeta.ayudaActivo : TEXTOS.planeta.ayuda}</span>
         <span className="ayuda-tactil">{TEXTOS.planeta.ayudaTactil}</span>

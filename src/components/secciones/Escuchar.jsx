@@ -1,4 +1,5 @@
 import PixelIcon from '../PixelIcon.jsx';
+import Explicacion from '../Explicacion.jsx';
 import { TEXTOS } from '../../config/textos.js';
 
 // Reproduce el período elegido año por año con sonido
@@ -21,7 +22,7 @@ export default function Escuchar({ reproduciendo, onAlternar, progreso, etiqueta
         </div>
         <div className="seccion-texto">
           <h2>{TEXTOS.escuchar.titulo}</h2>
-          <p>{TEXTOS.escuchar.texto}</p>
+          <Explicacion lead={TEXTOS.escuchar.lead} puntos={TEXTOS.escuchar.puntos} />
         </div>
       </div>
     </section>

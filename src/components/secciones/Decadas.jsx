@@ -1,10 +1,11 @@
+import { memo } from 'react';
 import { stripeColor } from '../../lib/colors.js';
 import { TEXTOS } from '../../config/textos.js';
 import { fmt as f } from '../../lib/formato.js';
 
 // Una columna pixel por década (en PC) o una barra por fila (en celular).
 // Tocar una década la carga en el explorador.
-export default function Decadas({ decadas, seleccion, onElegir }) {
+function Decadas({ decadas, seleccion, onElegir }) {
   const max = Math.max(1.5, ...decadas.map(d => d.value));
   const hayIncompletas = decadas.some(d => d.months < 120);
   return (
@@ -12,7 +13,7 @@ export default function Decadas({ decadas, seleccion, onElegir }) {
       <div className="seccion-ancha decadas-bloque">
         <div className="decadas-cabeza">
           <h2>{TEXTOS.decadas.titulo}</h2>
-          <p>{TEXTOS.decadas.texto}</p>
+          <p className="lead">{TEXTOS.decadas.texto}</p>
         </div>
         <div className="decadas-panel panel">
           <ol className="decadas">
@@ -39,3 +40,6 @@ export default function Decadas({ decadas, seleccion, onElegir }) {
     </section>
   );
 }
+
+// memo: solo se vuelve a dibujar si cambian sus datos (no en cada año recorrido)
+export default memo(Decadas);

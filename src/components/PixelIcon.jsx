@@ -1,6 +1,47 @@
 // Íconos pixel art dibujados a mano (8×8). '#' = color, '.' = vacío.
 // Para agregar uno nuevo, dibuja su mapa en ICONOS.
 const ICONOS = {
+  descargar: [
+    '...##...',
+    '...##...',
+    '...##...',
+    '.######.',
+    '..####..',
+    '...##...',
+    '#......#',
+    '########',
+  ],
+  subir: [
+    '...##...',
+    '..####..',
+    '.######.',
+    '...##...',
+    '...##...',
+    '...##...',
+    '#......#',
+    '########',
+  ],
+  // Código: </> en 13×8 (ícono propio, no es el logo de ninguna marca)
+  codigo: [
+    '.......#.....',
+    '..##...#.##..',
+    '.##....#..##.',
+    '##....#....##',
+    '##....#....##',
+    '.##..#....##.',
+    '..##.#...##..',
+    '.....#.......',
+  ],
+  externo: [
+    '....####',
+    '......##',
+    '.....#.#',
+    '#...#..#',
+    '#..#....',
+    '#.......',
+    '#.......',
+    '#####...',
+  ],
   sonido: [
     '...#....',
     '..##..#.',
@@ -154,9 +195,9 @@ export default function PixelIcon({ nombre, tamano = 16, color = 'currentColor',
   );
   return (
     <svg
-      width={tamano}
+      width={(tamano * mapa[0].length) / mapa.length}
       height={tamano}
-      viewBox="0 0 8 8"
+      viewBox={`0 0 ${mapa[0].length} ${mapa.length}`}
       shapeRendering="crispEdges"
       fill={color}
       role={titulo ? 'img' : undefined}

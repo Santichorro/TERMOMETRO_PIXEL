@@ -5,6 +5,7 @@ import '@fontsource/pixelify-sans/latin-500.css';
 import '@fontsource/pixelify-sans/latin-600.css';
 import '@fontsource/mulish/latin-400.css';
 import '@fontsource/mulish/latin-600.css';
+import './styles/cinco.css'; // el 5 pixel propio (después de las fuentes, para que tenga prioridad)
 import './styles/tokens.css';
 import './styles/base.css';
 import App from './App.jsx';

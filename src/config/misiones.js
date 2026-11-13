@@ -6,7 +6,7 @@
 //   'referencia'  → cambiar la referencia NASA ⇄ preindustrial
 //   'buscar'      → seleccionar el primer año completo ≥ umbral
 //   'record'      → seleccionar el año completo más cálido
-//   'objetos'     → abrir `cantidad` objetos del paisaje
+//   'objetos'     → abrir `cantidad` objetos del planeta
 //   'decada'      → tocar la década más cálida en "Década por década"
 //   'escuchar'    → escuchar un período completo
 //   'adivinar'    → estimar el presente y revelar
@@ -50,10 +50,10 @@ export const MISIONES = [
     logro: '{anio} es el año más cálido del registro: {valor} °C sobre la era preindustrial.',
   },
   {
-    id: 'objetos', tipo: 'objetos', xp: 30, cantidad: 3,
+    id: 'objetos', tipo: 'objetos', xp: 30, cantidad: 4,
     titulo: 'Detrás de los datos',
-    texto: 'Toca 3 objetos del paisaje para saber de dónde salen los números.',
-    pista: 'Los objetos están sobre el suelo, debajo del planeta: la fábrica, la estación, la boya y el termómetro.',
+    texto: 'Toca 4 objetos del planeta para saber de dónde salen los números.',
+    pista: 'Busca los aros amarillos sobre el planeta y gíralo: hay una fábrica, una estación, una boya, un glaciar, un arrecife y un termómetro.',
     logro: 'Los datos combinan estaciones en tierra y mediciones del océano, y se comparan con antes de la industria.',
   },
   {

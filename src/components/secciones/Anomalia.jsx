@@ -1,8 +1,10 @@
+import { memo } from 'react';
 import Referencia from '../Referencia.jsx';
+import Explicacion from '../Explicacion.jsx';
 import { TEXTOS, plantilla } from '../../config/textos.js';
 
 // ¿Qué es una anomalía? Texto + demostración con dos ceros.
-export default function Anomalia({ referencia, onReferencia, ejemplo, offset }) {
+function Anomalia({ referencia, onReferencia, ejemplo, offset }) {
   const escala = 70; // px por °C en la ilustración
   const cero = referencia === 'nasa' ? -offset : 0;
   const alto = v => Math.max(4, Math.abs(v - cero) * escala);
@@ -11,7 +13,7 @@ export default function Anomalia({ referencia, onReferencia, ejemplo, offset }) 
       <div className="seccion-grid">
         <div className="seccion-texto">
           <h2>{TEXTOS.anomalia.titulo}</h2>
-          {TEXTOS.anomalia.parrafos.map(p => <p key={p}>{p}</p>)}
+          <Explicacion lead={TEXTOS.anomalia.lead} puntos={TEXTOS.anomalia.puntos} />
           {ejemplo && <p className="dato-destacado">{plantilla(TEXTOS.anomalia.ejemplo, ejemplo)}</p>}
         </div>
         <figure className="demo panel">
@@ -35,3 +37,6 @@ export default function Anomalia({ referencia, onReferencia, ejemplo, offset }) 
     </section>
   );
 }
+
+// memo: solo se vuelve a dibujar si cambian sus datos (no en cada año recorrido)
+export default memo(Anomalia);

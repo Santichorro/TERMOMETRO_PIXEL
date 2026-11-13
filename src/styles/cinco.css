@@ -1,0 +1,24 @@
+/* ==========================================================
+   Un "5" pixel propio para Pixelify Sans.
+   El 5 original se confunde con la S. Estas dos mini fuentes (~660 bytes)
+   son la Pixelify original con un 5 redibujado, recortadas a ese único carácter.
+   Como familia aparte ('Pixelify Cinco') van PRIMERO en --display (tokens.css):
+   el navegador la usa para el 5 y, para todo lo demás, sigue con Pixelify Sans.
+   Se generan con scripts/generar-cinco.py
+   ========================================================== */
+@font-face {
+  font-family: 'Pixelify Cinco';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../assets/fuentes/pixelify-cinco-500.woff2') format('woff2');
+  unicode-range: U+0035;
+}
+@font-face {
+  font-family: 'Pixelify Cinco';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../assets/fuentes/pixelify-cinco-600.woff2') format('woff2');
+  unicode-range: U+0035;
+}

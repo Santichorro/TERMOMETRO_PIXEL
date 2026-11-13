@@ -1,7 +1,8 @@
 // ==========================================================
 // Texturas del planeta, optimizadas:
 // - Los continentes vienen PRE-DIBUJADOS en una imagen pequeña
-//   (src/assets/tierra-sprite.png, ~21 KB, 3 bandas: tierra, contornos, retícula).
+//   (src/assets/tierra-sprite.png, ~21 KB, 3 bandas: tierra, contornos, retícula;
+//   hoy se usan la tierra y la retícula punteada).
 //   Así no se descarga ni se procesa el mapa vectorial en el navegador.
 // - El campo de anomalías se calcula a 128×64 con tablas precalculadas
 //   (vectores por píxel, factores fijos y paleta de 512 colores).
@@ -75,7 +76,6 @@ export function prepararCapas(img) {
     return c;
   };
   const tierra = banda(0);
-  const contornos = banda(1);
   const reticula = banda(2);
 
   // Factor fijo del campo: más calor en el Ártico y en tierra firme
@@ -95,18 +95,30 @@ export function prepararCapas(img) {
     }
   }
 
-  // Capa del mapa (contornos negros + retícula tenue), lista para superponer
+  // Capa del mapa (se calcula una vez): tierra firme con un tinte muy suave, sin
+  // bordes, para reconocer los continentes + retícula punteada. Sin contornos continuos.
   const mapa = document.createElement('canvas');
   mapa.width = TEX_W;
   mapa.height = TEX_H;
   const mx = mapa.getContext('2d');
-  mx.globalAlpha = 0.35;
+  mx.globalAlpha = 0.45;
   mx.drawImage(reticula, 0, 0);
   mx.globalAlpha = 1;
-  mx.drawImage(contornos, 0, 0);
   mx.globalCompositeOperation = 'source-in';
   mx.fillStyle = '#13212c';
   mx.fillRect(0, 0, TEX_W, TEX_H);
+  mx.globalCompositeOperation = 'source-over';
+  mx.globalAlpha = 0.09;
+  const tinteTierra = document.createElement('canvas');
+  tinteTierra.width = TEX_W;
+  tinteTierra.height = TEX_H;
+  const tx = tinteTierra.getContext('2d');
+  tx.drawImage(tierra, 0, 0);
+  tx.globalCompositeOperation = 'source-in';
+  tx.fillStyle = '#13212c';
+  tx.fillRect(0, 0, TEX_W, TEX_H);
+  mx.drawImage(tinteTierra, 0, 0);
+  mx.globalAlpha = 1;
 
   const campo = document.createElement('canvas');
   campo.width = FW;
@@ -118,7 +130,7 @@ export function prepararCapas(img) {
   tinte.width = TEX_W;
   tinte.height = TEX_H;
 
-  return { tierra, contornos, mapa, campo, campoCtx, campoImg, campo32: new Uint32Array(campoImg.data.buffer), tinte, tinteCtx: tinte.getContext('2d') };
+  return { tierra, mapa, campo, campoCtx, campoImg, campo32: new Uint32Array(campoImg.data.buffer), tinte, tinteCtx: tinte.getContext('2d') };
 }
 
 // g = anomalía global respecto a 1951–1980; anio = posición en el tiempo (decimal)
@@ -163,7 +175,7 @@ export function pintarTextura(ctx, vista, c, capas, mezcla) {
     pintarCampo(capas, c.nasa, c.anio);
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(capas.campo, 0, 0, TEX_W, TEX_H);
-    ctx.drawImage(capas.mapa, 0, 0);
+    ctx.drawImage(capas.mapa, 0, 0); // tinte de continentes + retícula, precalculados
     return;
   }
   const t = Math.max(0, Math.min(1, c.valor / 1.5));
